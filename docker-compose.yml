@@ -3,6 +3,8 @@ version: '3'
 services:
   db:
     image: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
   web:
     build: .
@@ -13,3 +15,6 @@ services:
       - "8000:8000"
     depends_on:
       - db
+
+volumes:
+  postgres_data:
