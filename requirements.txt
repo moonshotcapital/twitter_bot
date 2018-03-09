@@ -1,4 +1,6 @@
 Django==2.0.2
+django-celery-results==1.0.1
 psycopg2==2.7.4
 tweepy==3.5.0
+celery==4.1.0
 click==6.7
