@@ -2,7 +2,7 @@ import logging
 import time
 import tweepy
 
-from bot import settings
+from django.conf import settings
 from twitterbot.models import TargetTwitterAccounts
 
 logging.basicConfig(level=logging.INFO)
