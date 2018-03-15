@@ -1,7 +1,7 @@
-FROM python:3
+FROM python:3.6.4
 
-ADD twitterbot.py /
-ADD requirements.txt /
+RUN mkdir /code
+WORKDIR /code
+ADD requirements.txt /code/
 RUN pip install -r requirements.txt
-
-CMD [ "python", "./twitterbot.py" ]
+ADD . /code/
