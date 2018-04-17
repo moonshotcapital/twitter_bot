@@ -10,7 +10,8 @@ logger = logging.getLogger(__name__)
 
 
 def main(limit=1000):
-    list_users = TargetTwitterAccounts.objects.values_list('twitter_url', flat=True)
+    list_users = TargetTwitterAccounts.objects.values_list('twitter_url',
+                                                           flat=True)
 
     consumer_key = settings.CONSUMER_KEY
     consumer_secret = settings.CONSUMER_SECRET

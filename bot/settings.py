@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 import os
 import dj_database_url
 
+from celery.schedules import crontab
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -38,8 +40,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+]
+
+
+INSTALLED_APPS += [
+    'django_celery_results',
+    'django_celery_beat',
+]
+
+INSTALLED_APPS += [
     'twitterbot.apps.TwitterbotConfig',
-    'django_celery_results'
 ]
 
 MIDDLEWARE = [
@@ -141,6 +151,13 @@ CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
+
+CELERY_BEAT_SCHEDULE = {
+    'twitter_follower_bot_task': {
+        'task': 'twitterbot.tasks.follow_people',
+        'schedule': crontab(minute=9, hour=12),
+    },
+}
 
 
 # Tweepy authentication

@@ -18,8 +18,10 @@ class TwitterUser(models.Model):
 
 
 class Followers(models.Model):
-    user_id1 = models.ForeignKey(TwitterUser, on_delete=models.CASCADE, related_name='publisher')
-    user_id2 = models.ForeignKey(TwitterUser, on_delete=models.CASCADE, related_name='subscriber')
+    user_id1 = models.ForeignKey(TwitterUser, on_delete=models.CASCADE,
+                                 related_name='publisher')
+    user_id2 = models.ForeignKey(TwitterUser, on_delete=models.CASCADE,
+                                 related_name='subscriber')
 
     class Meta:
         db_table = 'followers'

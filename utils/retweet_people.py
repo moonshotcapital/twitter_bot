@@ -27,7 +27,6 @@ def main():
     with open('the_key_words.txt', 'r') as f:
         key_words = [line.rstrip('\n') for line in f]
 
-
     for name in retweet_people:
         all_post = api.user_timeline(
             screen_name=name)  # Returns the 20 most recent tw.
