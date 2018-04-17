@@ -145,8 +145,8 @@ STATIC_URL = '/static/'
 
 # Celery settings
 
-CELERY_BROKER_URL = 'redis://redis:6379'
-CELERY_RESULT_BACKEND = 'redis://redis:6379'
+CELERY_BROKER_URL = os.environ.get('REDIS_URL', 'redis://redis:6379')
+CELERY_RESULT_BACKEND = os.environ.get('REDIS_URL', 'redis://redis:6379')
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
@@ -155,7 +155,7 @@ CELERY_TIMEZONE = TIME_ZONE
 CELERY_BEAT_SCHEDULE = {
     'twitter_follower_bot_task': {
         'task': 'twitterbot.tasks.follow_people',
-        'schedule': crontab(minute=9, hour=12),
+        'schedule': crontab(minute=20, hour=17),
     },
 }
 
