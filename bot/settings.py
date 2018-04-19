@@ -28,7 +28,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '2etpf#=w%qcbdeulchat$+z+*e=up8
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = bool(os.environ.get('DJANGO_DEBUG', True))
 
-ALLOWED_HOSTS = ['tippitwit.herokuapp.com', '127.0.0.1']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -154,7 +154,11 @@ CELERY_TIMEZONE = TIME_ZONE
 CELERY_BEAT_SCHEDULE = {
     'twitter_follower_bot_task': {
         'task': 'twitterbot.tasks.follow_people',
-        'schedule': crontab(minute=20, hour=17),
+        'schedule': crontab(hour=12, minute=0),
+    },
+    'update_followers_list_task': {
+        'task': 'twitterbot.tasks.update_followers_list_task',
+        'schedule': crontab(hour=17, minute=0),
     },
 }
 
