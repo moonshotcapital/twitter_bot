@@ -31,20 +31,13 @@ class TargetTwitterAccount(models.Model):
     screen_name = models.CharField(max_length=50)
     followers_count = models.PositiveIntegerField(null=True)
 
-    location_city = models.CharField(max_length=100, blank=True, null=True)
-    location_region = models.CharField(max_length=100, blank=True, null=True)
-    location_country_code = models.CharField(max_length=100, blank=True,
-                                             null=True)
-    organization = models.CharField(max_length=100, blank=True, null=True,
-                                    db_index=True)
+    location = models.CharField(max_length=200, blank=True, null=True)
 
     class Meta:
         db_table = 'target_twitter_accounts'
 
-    @property
-    def location(self):
-        return '{} {} {}'.format(self.location_city, self.location_region,
-                                 self.location_country_code)
+    def __str__(self):
+        return self.screen_name
 
 
 class BlackList(models.Model):
