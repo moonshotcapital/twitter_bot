@@ -19,6 +19,14 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('username', nargs='+', type=str)
 
+        parser.add_argument(
+            '--include-friends',
+            action="store_true",
+            dest='friends',
+            default=False,
+            help='Additionally loads friends of twitter user'
+        )
+
     def handle(self, *args, **options):
 
         auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
@@ -49,6 +57,35 @@ class Command(BaseCommand):
 
                 self.stdout.write(
                     self.style.SUCCESS('Successfully loaded followers of {}'
+                                       .format(user)))
+
+            except tweepy.error.TweepError as err:
+                raise err
+
+        if options['friends']:
+
+            self.stdout.write('Loading friends of {}'.format(user))
+
+            try:
+                friends_list = api.get_user(user).friends()
+                for friend in friends_list:
+                    friend_exist = TargetTwitterAccount.objects.filter(
+                        user_id=friend.id
+                    ).exists()
+
+                    if not friend_exist:
+                        friend_info = {
+                            'user_id': friend.id,
+                            'name': friend.name,
+                            'screen_name': friend.screen_name,
+                            'followers_count': friend.followers_count,
+                        }
+                        TargetTwitterAccount.objects.create(**friend_info)
+                    else:
+                        continue
+
+                self.stdout.write(
+                    self.style.SUCCESS('Successfully loaded friends of {}'
                                        .format(user)))
 
             except tweepy.error.TweepError as err:
