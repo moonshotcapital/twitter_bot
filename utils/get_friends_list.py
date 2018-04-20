@@ -50,14 +50,14 @@ def update_followers_list():
     for follower in followers_list:
         user_type = TwitterFollower.FOLLOWER
         follower_exist = TwitterFollower.objects.filter(
-            user_id=friend.id,
+            user_id=follower.id,
             user_type=user_type
         ).exists()
         exist_in_black_list = BlackList.objects.filter(
             user_id=follower.id
         ).exists()
         if not follower_exist and not exist_in_black_list:
-            friends_info = {
+            follower_info = {
                 'user_id': follower.id,
                 'name': follower.name,
                 'screen_name': follower.screen_name,
@@ -65,8 +65,8 @@ def update_followers_list():
                 'user_type': user_type,
                 'location': follower.location
             }
-            TwitterFollower.objects.create(**friends_info)
+            TwitterFollower.objects.create(**follower_info)
         elif follower_exist and exist_in_black_list:
-            TwitterFollower.objects.delete(user_id=friend.id)
+            TwitterFollower.objects.delete(user_id=follower.id)
         else:
             continue
