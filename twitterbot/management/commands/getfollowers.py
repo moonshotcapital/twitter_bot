@@ -49,7 +49,8 @@ class Command(BaseCommand):
                             'user_id': follower.id,
                             'name': follower.name,
                             'screen_name': follower.screen_name,
-                            'followers_count': follower.followers_count
+                            'followers_count': follower.followers_count,
+                            'location': follower.location
                         }
                         TargetTwitterAccount.objects.create(**follower_info)
                     else:
@@ -79,6 +80,7 @@ class Command(BaseCommand):
                             'name': friend.name,
                             'screen_name': friend.screen_name,
                             'followers_count': friend.followers_count,
+                            'location': friend.location
                         }
                         TargetTwitterAccount.objects.create(**friend_info)
                     else:
