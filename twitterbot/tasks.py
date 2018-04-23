@@ -1,14 +1,14 @@
 from celery import task
 from celery.utils.log import get_task_logger
-from utils.twitterbot import main
-from utils.get_friends_list import update_twitter_followers_list
+from utils.twitterbot import follow_users
+from utils.sync_followers import update_twitter_followers_list
 
 logger = get_task_logger(__name__)
 
 @task
 def follow_people():
     logger.info('Started following people!')
-    main()
+    follow_users()
     logger.info('Finished following people!')
 
 
