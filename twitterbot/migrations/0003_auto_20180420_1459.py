@@ -31,4 +31,9 @@ class Migration(migrations.Migration):
             name='location',
             field=models.CharField(blank=True, max_length=200, null=True),
         ),
+        migrations.AddField(
+            model_name='targettwitteraccount',
+            name='is_follower',
+            field=models.BooleanField(default=False),
+        ),
     ]

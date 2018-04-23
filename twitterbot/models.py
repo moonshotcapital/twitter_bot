@@ -30,6 +30,7 @@ class TargetTwitterAccount(models.Model):
     name = models.CharField(max_length=100)
     screen_name = models.CharField(max_length=50)
     followers_count = models.PositiveIntegerField(null=True)
+    is_follower = models.BooleanField(default=False)
 
     location = models.CharField(max_length=200, blank=True, null=True)
 
