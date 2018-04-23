@@ -1,7 +1,12 @@
 from django.contrib import admin
-from .models import TwitterUser, Followers, TargetTwitterAccounts, BlackList
+from .models import TwitterFollower, TargetTwitterAccount, BlackList
 
-admin.site.register(TwitterUser)
-admin.site.register(Followers)
-admin.site.register(TargetTwitterAccounts)
+
+@admin.register(TwitterFollower)
+class TwitterUserAdmin(admin.ModelAdmin):
+    list_display = ('user_id', 'screen_name', 'name', 'followers_count',
+                    'user_type')
+
+
+admin.site.register(TargetTwitterAccount)
 admin.site.register(BlackList)
