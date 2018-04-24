@@ -31,76 +31,100 @@ class Command(BaseCommand):
             help='Additionally loads friends of twitter user'
         )
 
+    @staticmethod
+    def save_twitter_users_to_db(twitter_users):
+        for tw_user in twitter_users:
+            follower_exist = TargetTwitterAccount.objects.filter(
+                user_id=tw_user.id
+            ).exists()
+
+            if not follower_exist:
+                follower_info = {
+                    'user_id': tw_user.id,
+                    'name': tw_user.name,
+                    'screen_name': tw_user.screen_name,
+                    'followers_count': tw_user.followers_count,
+                    'location': tw_user.location
+                }
+                TargetTwitterAccount.objects.create(**follower_info)
+                logger.info("Save %s", tw_user.name)
+            else:
+                logger.info("Skipped %s", tw_user.name)
+                continue
+
+    @staticmethod
+    def get_followers(twitter_user):
+        followers = []
+        followers_count = 0
+
+        tw_followers_list = twitter_user.followers(cursor=-1, count=200)
+        followers += tw_followers_list[0]
+        followers_count += len(tw_followers_list[0])
+        next_cursor = tw_followers_list[1][1]
+
+        while followers_count <= twitter_user.followers_count:
+            tw_followers_list = twitter_user.followers(cursor=next_cursor,
+                                                       count=200)
+            followers += tw_followers_list[0]
+            followers_count += len(tw_followers_list[0])
+            next_cursor = tw_followers_list[1][1]
+            if next_cursor == 0:
+                break
+
+        return followers
+
+    @staticmethod
+    def get_friends(twitter_user):
+        friends = []
+        friends_count = 0
+
+        tw_friends_list = twitter_user.friends(cursor=-1, count=200)
+        friends += tw_friends_list[0]
+        friends_count += len(tw_friends_list[0])
+        next_cursor = tw_friends_list[1][1]
+
+        while friends_count <= twitter_user.followers_count:
+            tw_friends_list = twitter_user.friends(
+                cursor=next_cursor,
+                count=200
+            )
+            friends += tw_friends_list[0]
+            friends_count += len(tw_friends_list[0])
+            next_cursor = tw_friends_list[1][1]
+            if next_cursor == 0:
+                break
+
+        return friends
+
     def handle(self, *args, **options):
 
         auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
         auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
-        api = tweepy.API(auth)
+        api = tweepy.API(auth, wait_on_rate_limit=True,
+                         wait_on_rate_limit_notify=True)
 
         for user in options['username']:
 
             self.stdout.write('Loading followers of {}'.format(user))
+            twitter_user = api.get_user(user)
+            followers = self.get_followers(twitter_user)
 
             try:
-                for page in tweepy.Cursor(api.followers_ids,
-                                          screen_name=user).pages():
-                    for follower_id in page:
-                        follower = api.get_user(id=follower_id)
-                        follower_exist = TargetTwitterAccount.objects.filter(
-                            user_id=follower.id
-                        ).exists()
-
-                        if not follower_exist:
-                            follower_info = {
-                                'user_id': follower.id,
-                                'name': follower.name,
-                                'screen_name': follower.screen_name,
-                                'followers_count': follower.followers_count,
-                                'location': follower.location
-                            }
-                            TargetTwitterAccount.objects.create(**follower_info)
-                            logger.info("Save %s", follower.name)
-                        else:
-                            logger.info("Skipped %s", follower.name)
-                            continue
-
+                self.save_twitter_users_to_db(followers)
                 self.stdout.write(
                     self.style.SUCCESS('Successfully loaded followers of {}'
                                        .format(user)))
-
             except tweepy.error.TweepError as err:
                 raise err
 
-        if options['friends']:
+            if options['friends']:
+                self.stdout.write('Loading friends of {}'.format(user))
+                friends = self.get_friends(twitter_user)
 
-            self.stdout.write('Loading friends of {}'.format(user))
-
-            try:
-                for page in tweepy.Cursor(api.friends_ids,
-                                          screen_name=user).pages():
-                    for friend_id in page:
-                        friend = api.get_user(id=friend_id)
-                        friend_exist = TargetTwitterAccount.objects.filter(
-                            user_id=friend.id
-                        ).exists()
-
-                        if not friend_exist:
-                            friend_info = {
-                                'user_id': friend.id,
-                                'name': friend.name,
-                                'screen_name': friend.screen_name,
-                                'followers_count': friend.followers_count,
-                                'location': friend.location
-                            }
-                            TargetTwitterAccount.objects.create(**friend_info)
-                            logger.info("Save %s", friend.name)
-                        else:
-                            logger.info("Skipped %s", friend.name)
-                            continue
-
-                self.stdout.write(
-                    self.style.SUCCESS('Successfully loaded friends of {}'
-                                       .format(user)))
-
-            except tweepy.error.TweepError as err:
-                raise err
+                try:
+                    self.save_twitter_users_to_db(friends)
+                    self.stdout.write(
+                        self.style.SUCCESS('Successfully loaded friends of {}'
+                                           .format(user)))
+                except tweepy.error.TweepError as err:
+                    raise err

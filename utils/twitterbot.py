@@ -19,7 +19,8 @@ def follow_users(limit=100):
 
     auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
-    api = tweepy.API(auth)
+    api = tweepy.API(auth, wait_on_rate_limit=True,
+                     wait_on_rate_limit_notify=True)
 
     counter = 0
     for user in tw_accounts:
@@ -29,8 +30,8 @@ def follow_users(limit=100):
             api.create_friendship(user.user_id)
             user.is_follower = True
             user.save(update_fields=('is_follower', ))
+            counter += 1
 
-        counter += 1
         if counter == limit:
             logger.info("The limit of %s followings is reached", limit)
             return
