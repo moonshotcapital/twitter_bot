@@ -4,7 +4,7 @@ from django.conf import settings
 
 import tweepy
 
-from twitterbot.models import TargetTwitterAccount
+from twitterbot.models import TargetTwitterAccount, BlackList
 from utils.get_followers_and_friends import get_followers, get_friends
 
 logging.basicConfig(level=logging.INFO)
@@ -39,7 +39,11 @@ class Command(BaseCommand):
                 user_id=tw_user.id
             ).exists()
 
-            if not follower_exist:
+            exist_in_black_list = BlackList.objects.filter(
+                user_id=tw_user.id
+            ).exists()
+
+            if not follower_exist and not exist_in_black_list:
                 follower_info = {
                     'user_id': tw_user.id,
                     'name': tw_user.name,

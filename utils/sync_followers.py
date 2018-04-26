@@ -22,7 +22,7 @@ def update_twitter_followers_list():
     api = tweepy.API(auth, wait_on_rate_limit=True,
                      wait_on_rate_limit_notify=True)
 
-    current_user = api.get_user('goformoonshot')
+    current_user = api.me()
     friends_list = get_friends(current_user)
     followers_list = get_followers(current_user)
 
