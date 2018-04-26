@@ -21,7 +21,7 @@ def update_twitter_followers_list():
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
     api = tweepy.API(auth)
 
-    current_user = api.me()
+    current_user = api.get_user('goformoonshot')
     friends_list = get_friends(current_user)
     followers_list = get_followers(current_user)
 
