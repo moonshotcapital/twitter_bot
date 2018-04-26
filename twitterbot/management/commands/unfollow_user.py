@@ -29,7 +29,8 @@ class Command(BaseCommand):
 
         auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
         auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
-        api = tweepy.API(auth)
+        api = tweepy.API(auth, wait_on_rate_limit=True,
+                         wait_on_rate_limit_notify=True)
 
         if options['username']:
             # Unfollow current user or list of users given in manage.py command
