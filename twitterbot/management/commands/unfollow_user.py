@@ -3,6 +3,7 @@ import logging
 import tweepy
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from django.db import IntegrityError
 
 from twitterbot.models import BlackList, TwitterFollower
 
@@ -22,7 +23,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         # username can be changed to user_id
-        parser.add_argument('username', nargs='+', type=str)
+        parser.add_argument('username', nargs='*', type=str)
 
     def handle(self, *args, **options):
 
@@ -37,7 +38,9 @@ class Command(BaseCommand):
         else:
             # TODO: add logic for getting list of users for unfollowing process
             # list must contain screen_names or user_ids of Twitter User
-            bad_users = []
+            bad_users = TwitterFollower.objects.filter(
+                followers_count__lt=300
+            ).values_list('user_id', flat=True)[:100]
 
         self.stdout.write('Start unfollowing users')
         for bad_user in bad_users:
@@ -45,8 +48,11 @@ class Command(BaseCommand):
             api.destroy_friendship(bad_user.id)
 
             # sync our db state due to unfollowing users
-            BlackList.objects.create(user_id=bad_user.id)
-            TwitterFollower.objects.filter(user_id=bad_user.id).delete()
+            try:
+                BlackList.objects.create(user_id=bad_user.id)
+                TwitterFollower.objects.filter(user_id=bad_user.id).delete()
+            except IntegrityError:
+                continue
 
             self.stdout.write(
                 self.style.SUCCESS(
