@@ -4,6 +4,7 @@ import tweepy
 from django.conf import settings
 
 from twitterbot.models import BlackList, TwitterFollower
+from utils.get_followers_and_friends import get_followers, get_friends
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -20,8 +21,9 @@ def update_twitter_followers_list():
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
     api = tweepy.API(auth)
 
-    friends_list = api.friends()
-    followers_list = api.followers()
+    current_user = api.me()
+    friends_list = get_friends(current_user)
+    followers_list = get_followers(current_user)
 
     # sync db if someone unsubscribed from us or etc.
     update_db_followers_list_due_to_non_automatic_changes(friends_list,

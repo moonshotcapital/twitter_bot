@@ -14,13 +14,17 @@ ACCESS_TOKEN = settings.ACCESS_TOKEN
 ACCESS_TOKEN_SECRET = settings.ACCESS_TOKEN_SECRET
 
 
-def follow_users(limit=100):
+def follow_users(limit=200):
     tw_accounts = TargetTwitterAccount.objects.filter(is_follower=False)
 
     auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
     api = tweepy.API(auth, wait_on_rate_limit=True,
                      wait_on_rate_limit_notify=True)
+
+    current_user = api.me()
+    if 4801 < current_user.followers_count < 5000:
+        limit = 5000 - current_user.followers_count
 
     counter = 0
     for user in tw_accounts:

@@ -5,6 +5,7 @@ from django.conf import settings
 import tweepy
 
 from twitterbot.models import TargetTwitterAccount
+from utils.get_followers_and_friends import get_followers, get_friends
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -52,50 +53,6 @@ class Command(BaseCommand):
                 logger.info("Skipped %s", tw_user.name)
                 continue
 
-    @staticmethod
-    def get_followers(twitter_user):
-        followers = []
-        followers_count = 0
-
-        tw_followers_list = twitter_user.followers(cursor=-1, count=200)
-        followers += tw_followers_list[0]
-        followers_count += len(tw_followers_list[0])
-        next_cursor = tw_followers_list[1][1]
-
-        while followers_count <= twitter_user.followers_count:
-            tw_followers_list = twitter_user.followers(cursor=next_cursor,
-                                                       count=200)
-            followers += tw_followers_list[0]
-            followers_count += len(tw_followers_list[0])
-            next_cursor = tw_followers_list[1][1]
-            if next_cursor == 0:
-                break
-
-        return followers
-
-    @staticmethod
-    def get_friends(twitter_user):
-        friends = []
-        friends_count = 0
-
-        tw_friends_list = twitter_user.friends(cursor=-1, count=200)
-        friends += tw_friends_list[0]
-        friends_count += len(tw_friends_list[0])
-        next_cursor = tw_friends_list[1][1]
-
-        while friends_count <= twitter_user.followers_count:
-            tw_friends_list = twitter_user.friends(
-                cursor=next_cursor,
-                count=200
-            )
-            friends += tw_friends_list[0]
-            friends_count += len(tw_friends_list[0])
-            next_cursor = tw_friends_list[1][1]
-            if next_cursor == 0:
-                break
-
-        return friends
-
     def handle(self, *args, **options):
 
         auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
@@ -107,7 +64,7 @@ class Command(BaseCommand):
 
             self.stdout.write('Loading followers of {}'.format(user))
             twitter_user = api.get_user(user)
-            followers = self.get_followers(twitter_user)
+            followers = get_followers(twitter_user)
 
             try:
                 self.save_twitter_users_to_db(followers)
@@ -119,7 +76,7 @@ class Command(BaseCommand):
 
             if options['friends']:
                 self.stdout.write('Loading friends of {}'.format(user))
-                friends = self.get_friends(twitter_user)
+                friends = get_friends(twitter_user)
 
                 try:
                     self.save_twitter_users_to_db(friends)
