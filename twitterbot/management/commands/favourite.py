@@ -43,5 +43,5 @@ class Command(BaseCommand):
                     self.style.SUCCESS('Successfully liked tweet id {}'
                                        ' with text: {}'
                                        .format(tweet.id, tweet.text)))
-            if counter == 2:
+            if counter == 20:
                 return
