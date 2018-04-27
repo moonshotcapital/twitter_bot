@@ -25,6 +25,10 @@ def follow_users(limit=200):
     current_user = api.me()
     if 4801 < current_user.followers_count < 5000:
         limit = 5000 - current_user.followers_count
+    elif current_user.followers_count >= 5000:
+        # TODO: delete this elif block when 'goformoonshot' account will have
+        # a sufficient balance of friends and subscribers
+        return
 
     counter = 0
     for user in tw_accounts:
