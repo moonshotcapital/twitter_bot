@@ -63,7 +63,7 @@ class Command(BaseCommand):
                 try:
                     api.retweet(tweet.id)
                 except tweepy.error.TweepError as err:
-                    if err.api_code == 327:
+                    if err.api_code == 327 or err.api_code == 185:
                         continue
                     else:
                         raise err
