@@ -58,7 +58,7 @@ class Command(BaseCommand):
 
         query = ' '.join(['#{}'.format(i) for i in options['tags']])
         counter = 0
-        for tweet in tweepy.Cursor(api.search, q=query, lang='en').items(40):
+        for tweet in tweepy.Cursor(api.search, q=query, lang='en').items(180):
             if tweet.retweet_count > 10 or tweet.favorite_count > 20:
                 try:
                     api.retweet(tweet.id)
@@ -72,5 +72,5 @@ class Command(BaseCommand):
                     self.style.SUCCESS('Successfully retweeted tweet id {}'
                                        ' with text: {}'
                                        .format(tweet.id, tweet.text)))
-            if counter == 2:
+            if counter == 10:
                 return
