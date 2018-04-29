@@ -2,7 +2,9 @@ import logging
 import tweepy
 
 from django.conf import settings
-from twitterbot.models import TargetTwitterAccount
+from django.db import IntegrityError
+
+from twitterbot.models import TargetTwitterAccount, BlackList
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -33,9 +35,24 @@ def follow_users(limit=200):
     counter = 0
     for user in tw_accounts:
 
-        if api.get_user(user.user_id).followers_count > 300:
+        try:
+            tw_user = api.get_user(user.user_id)
+        except tweepy.error.TweepError as err:
+            if err.api_code == 50:
+                print("User {} not found!".format(user.name))
+                try:
+                    BlackList.objects.create(user_id=user.user_id,
+                                             reason="User not found!")
+                    TargetTwitterAccount.objects.filter(user_id=user.user_id).delete()
+                except IntegrityError:
+                    continue
+                continue
+            else:
+                raise err
+
+        if tw_user.followers_count > 300:
             logger.info("Follow %s", user)
-            api.create_friendship(user.user_id)
+            api.create_friendship(tw_user.id)
             user.is_follower = True
             user.save(update_fields=('is_follower', ))
             counter += 1
