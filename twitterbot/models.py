@@ -52,3 +52,13 @@ class BlackList(models.Model):
 
     def __str__(self):
         return '{} - {}'.format(self.user_id, self.reason)
+
+
+class Tag(models.Model):
+    tag = models.CharField(max_length=100, unique=True)
+
+    class Meta:
+        db_table = 'twitter_tags'
+
+    def __str__(self):
+        return self.tag
