@@ -25,9 +25,9 @@ def follow_users(limit=200):
                      wait_on_rate_limit_notify=True)
 
     current_user = api.me()
-    if 4801 < current_user.followers_count < 5000:
+    if 4801 < current_user.friends_count < 5000:
         limit = 5000 - current_user.followers_count
-    elif current_user.followers_count >= 5000:
+    elif current_user.friends_count >= 5000:
         # TODO: delete this elif block when 'goformoonshot' account will have
         # a sufficient balance of friends and subscribers
         return
@@ -50,7 +50,7 @@ def follow_users(limit=200):
             else:
                 raise err
 
-        if tw_user.followers_count > 300:
+        if tw_user.followers_count > 1000:
             logger.info("Follow %s", user)
             api.create_friendship(tw_user.id)
             user.is_follower = True
