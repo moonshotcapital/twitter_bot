@@ -42,5 +42,5 @@ class Command(BaseCommand):
                 self.style.SUCCESS('Successfully retweeted tweet id {}'
                                    ' with text: {}'
                                    .format(tweet.id, tweet.text)))
-            if counter == 2:
+            if counter == 1:
                 return
