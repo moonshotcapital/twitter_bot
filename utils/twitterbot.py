@@ -1,10 +1,15 @@
 import logging
 import tweepy
+import random
 
 from django.conf import settings
 from django.db import IntegrityError
 
-from twitterbot.models import TargetTwitterAccount, BlackList
+from twitterbot.models import (
+    BlackList,
+    TargetTwitterAccount,
+    VerifiedUserWithTag
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -60,3 +65,43 @@ def follow_users(limit=200):
         if counter == limit:
             logger.info("The limit of %s followings is reached", limit)
             return
+
+
+def retweet_verified_users():
+
+    auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
+    auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+    api = tweepy.API(auth, wait_on_rate_limit=True,
+                     wait_on_rate_limit_notify=True)
+
+    # get random verified user from our DB
+    ids_list = VerifiedUserWithTag.objects.all().values_list('id', flat=True)
+    user = VerifiedUserWithTag.objects.get(id=random.choice(ids_list))
+
+    # get recent 20 tweets for current user
+    recent_tweets = api.user_timeline(user.screen_name)
+
+    counter = 0
+    limit = 1  # responsible for how many tweets will be retweeted
+
+    if user and user.tags:
+        tag = '#{}'.format(random.choice(user.tags))
+    else:
+        tag = ''
+
+    for tweet in recent_tweets:
+        tw_text = tweet.text.lower()
+
+        if tag in tw_text and not tweet.in_reply_to_status_id and (
+                tweet.lang == 'en' or not tweet.in_reply_to_user_id):
+
+            try:
+                api.retweet(tweet.id)
+            except tweepy.error.TweepError as err:
+                if err.api_code == 327 or err.api_code == 185:
+                    continue
+
+            counter += 1
+
+        if counter == limit:
+            break
