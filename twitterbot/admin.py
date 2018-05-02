@@ -1,5 +1,10 @@
 from django.contrib import admin
-from .models import TwitterFollower, TargetTwitterAccount, BlackList, Tag
+from .models import (
+    BlackList,
+    TwitterFollower,
+    TargetTwitterAccount,
+    VerifiedUserWithTag
+)
 
 
 @admin.register(TwitterFollower)
@@ -8,6 +13,10 @@ class TwitterUserAdmin(admin.ModelAdmin):
                     'user_type')
 
 
+@admin.register(VerifiedUserWithTag)
+class VerifiedUserWithTagAdmin(admin.ModelAdmin):
+    list_display = ('screen_name', 'tags')
+
+
 admin.site.register(TargetTwitterAccount)
 admin.site.register(BlackList)
-admin.site.register(Tag)

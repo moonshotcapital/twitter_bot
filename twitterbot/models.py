@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
 
 
 class TwitterFollower(models.Model):
@@ -54,11 +55,16 @@ class BlackList(models.Model):
         return '{} - {}'.format(self.user_id, self.reason)
 
 
-class Tag(models.Model):
-    tag = models.CharField(max_length=100, unique=True)
+class VerifiedUserWithTag(models.Model):
+    """
+    This model contains users whom we are going to retweet using tags
+    """
+
+    screen_name = models.CharField(max_length=50, unique=True)
+    tags = ArrayField(models.CharField(max_length=50), null=True, blank=True)
 
     class Meta:
-        db_table = 'twitter_tags'
+        db_table = 'twitter_users_with_tags'
 
     def __str__(self):
-        return self.tag
+        return self.screen_name
