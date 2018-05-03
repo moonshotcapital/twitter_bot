@@ -24,3 +24,10 @@ def retweet_task():
     logger.info('Started retweeting!')
     retweet_verified_users()
     logger.info('Finished retweeting!')
+
+
+@task
+def unfollow_users_task():
+    logger.info('Started unfollowing users!')
+    follow_users()
+    logger.info('Finished unfollowing users!')

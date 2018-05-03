@@ -8,6 +8,7 @@ from django.db import IntegrityError
 from twitterbot.models import (
     BlackList,
     TargetTwitterAccount,
+    TwitterFollower,
     VerifiedUserWithTag
 )
 
@@ -105,3 +106,27 @@ def retweet_verified_users():
 
         if counter == limit:
             break
+
+
+def unfollow_users():
+    auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
+    auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+    api = tweepy.API(auth, wait_on_rate_limit=True,
+                     wait_on_rate_limit_notify=True)
+
+    # TODO: add logic for getting list of users for unfollowing process
+    # list must contain screen_names or user_ids of Twitter User
+    bad_users = TwitterFollower.objects.filter(
+        followers_count__lt=1000
+    ).values_list('user_id', flat=True)[:300]
+
+    for bad_user in bad_users:
+        bad_user = api.get_user(bad_user)
+        api.destroy_friendship(bad_user.id)
+
+        # sync our db state due to unfollowing users
+        try:
+            BlackList.objects.create(user_id=bad_user.id)
+            TwitterFollower.objects.filter(user_id=bad_user.id).delete()
+        except IntegrityError:
+            continue
