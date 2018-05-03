@@ -40,9 +40,9 @@ def update_db_followers_list_due_to_non_automatic_changes(friends_list,
         user_type=TwitterFollower.FOLLOWER
     ).values_list('user_id', flat=True)
 
+    tw_followers = [user.id_str for user in followers_list]
     for db_follower in db_followers:
-        tw_foolowers = [user.id for user in followers_list]
-        if db_follower not in tw_foolowers:
+        if db_follower not in tw_followers:
             TwitterFollower.objects.filter(
                 user_id=db_follower,
                 user_type=TwitterFollower.FOLLOWER
@@ -52,8 +52,8 @@ def update_db_followers_list_due_to_non_automatic_changes(friends_list,
         user_type=TwitterFollower.FRIEND
     ).values_list('user_id', flat=True)
 
+    tw_friends = [user.id_str for user in friends_list]
     for db_friend in db_friends:
-        tw_friends = [user.id for user in friends_list]
         if db_friend not in tw_friends:
             TwitterFollower.objects.filter(
                 user_id=db_friend,

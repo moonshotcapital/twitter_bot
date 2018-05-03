@@ -154,19 +154,19 @@ CELERY_TIMEZONE = TIME_ZONE
 CELERY_BEAT_SCHEDULE = {
     'twitter_follower_bot_task': {
         'task': 'twitterbot.tasks.follow_people',
-        'schedule': crontab(hour=12, minute=0),
+        'schedule': crontab(hour=16, minute=30),
     },
     'update_followers_list_task': {
         'task': 'twitterbot.tasks.update_followers_list_task',
         'schedule': crontab(hour=17, minute=0),
     },
-    'retweet_task': {
-        'task': 'twitterbot.tasks.retweet_task',
-        'schedule': crontab(hour=19, minute=0),
-    },
+    # 'retweet_task': {
+    #     'task': 'twitterbot.tasks.retweet_task',
+    #     'schedule': crontab(hour=19, minute=0),
+    # },
     'unfollow_users_task': {
         'task': 'twitterbot.tasks.unfollow_users_task',
-        'schedule': crontab(hour=11, minute=0),
+        'schedule': crontab(hour=16, minute=0),
     },
 }
 

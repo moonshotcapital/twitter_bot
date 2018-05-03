@@ -23,7 +23,8 @@ ACCESS_TOKEN_SECRET = settings.ACCESS_TOKEN_SECRET
 
 
 def follow_users(limit=200):
-    tw_accounts = TargetTwitterAccount.objects.filter(is_follower=False)
+    tw_accounts = TargetTwitterAccount.objects.filter(is_follower=False,
+                                                      followers_count__gt=800)
 
     auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
