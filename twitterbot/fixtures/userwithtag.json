@@ -1,0 +1,373 @@
+[
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 1,
+    "fields": {
+      "screen_name": "Appsflyer"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 2,
+    "fields": {
+      "screen_name": "Adweek"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 3,
+    "fields": {
+      "screen_name": "Appsummer"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 4,
+    "fields": {
+      "screen_name": "CodeCondo"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 5,
+    "fields": {
+      "screen_name": "Amy Groden-Morrison"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 6,
+    "fields": {
+      "screen_name": "Benedict Evans"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 7,
+    "fields": {
+      "screen_name": "Larry Dignan"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 8,
+    "fields": {
+      "screen_name": "Maribel Lopez"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 9,
+    "fields": {
+      "screen_name": "Paul Asadoorian"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 10,
+    "fields": {
+      "screen_name": "Robin Wauters"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 11,
+    "fields": {
+      "screen_name": "Harry McCracken"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 12,
+    "fields": {
+      "screen_name": "Christina Warren"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 13,
+    "fields": {
+      "screen_name": "FT Technology News"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 14,
+    "fields": {
+      "screen_name": "Larry Kim"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 15,
+    "fields": {
+      "screen_name": "Ted Rubin"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 16,
+    "fields": {
+      "screen_name": "Martin Zwilling"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 17,
+    "fields": {
+      "screen_name": "Behnam Fakhimi"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 18,
+    "fields": {
+      "screen_name": "Benjamin Rubenstein"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 19,
+    "fields": {
+      "screen_name": "Reto Meier"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 20,
+    "fields": {
+      "screen_name": "Romain Guy"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 21,
+    "fields": {
+      "screen_name": "S. Vaughan-Nichols"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 22,
+    "fields": {
+      "screen_name": "Daniel Eggert"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 23,
+    "fields": {
+      "screen_name": "Jeremy Olson"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 24,
+    "fields": {
+      "screen_name": "Cyril Mottier"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 25,
+    "fields": {
+      "screen_name": "Bart van der Werf"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 26,
+    "fields": {
+      "screen_name": "Nick Craver"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 27,
+    "fields": {
+      "screen_name": "Andy Matuschak"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 28,
+    "fields": {
+      "screen_name": "Matt Galloway"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 29,
+    "fields": {
+      "screen_name": "Tim Sweeney"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 30,
+    "fields": {
+      "screen_name": "Ray Wenderlich"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 31,
+    "fields": {
+      "screen_name": "Ben Sandofsky"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 32,
+    "fields": {
+      "screen_name": "Eric Seufert"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 33,
+    "fields": {
+      "screen_name": "Moritz Daan"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 34,
+    "fields": {
+      "screen_name": "Thomas Petit"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 35,
+    "fields": {
+      "screen_name": "John Koetsier"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 36,
+    "fields": {
+      "screen_name": "Peggy Ann Salz"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 37,
+    "fields": {
+      "screen_name": "Dean TakahashiVerified account"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 38,
+    "fields": {
+      "screen_name": "Brad Glasgow"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 39,
+    "fields": {
+      "screen_name": "Ironsource"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 40,
+    "fields": {
+      "screen_name": "App Annie"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 41,
+    "fields": {
+      "screen_name": "Chartboost"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 42,
+    "fields": {
+      "screen_name": "Priori Data"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 43,
+    "fields": {
+      "screen_name": "AppTweak"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 44,
+    "fields": {
+      "screen_name": "App Samurai"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 45,
+    "fields": {
+      "screen_name": "Inapptics"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 46,
+    "fields": {
+      "screen_name": "Urban Airship"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 47,
+    "fields": {
+      "screen_name": "AppFollow"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 48,
+    "fields": {
+      "screen_name": "Kochava"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 49,
+    "fields": {
+      "screen_name": "Apptamin"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 50,
+    "fields": {
+      "screen_name": "App Radar"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 51,
+    "fields": {
+      "screen_name": "Flurry"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 52,
+    "fields": {
+      "screen_name": "Oliver Bussmann "
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "pk": 53,
+    "fields": {
+      "screen_name": "Chris Gledhill"
+    }
+  }
+]
