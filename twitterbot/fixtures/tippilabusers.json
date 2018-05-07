@@ -1,0 +1,26 @@
+[
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "fields": {
+      "screen_name": "dabeaz"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "fields": {
+      "screen_name": "rdegges"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "fields": {
+      "screen_name": "GoHugoIO"
+    }
+  },
+  {
+    "model": "twitterbot.VerifiedUserWithTag",
+    "fields": {
+      "screen_name": "1st1"
+    }
+  }
+]
