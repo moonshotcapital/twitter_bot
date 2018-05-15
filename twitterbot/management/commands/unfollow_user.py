@@ -39,9 +39,7 @@ class Command(BaseCommand):
         else:
             # TODO: add logic for getting list of users for unfollowing process
             # list must contain screen_names or user_ids of Twitter User
-            bad_users = TwitterFollower.objects.filter(
-                followers_count__lt=1000
-            ).values_list('user_id', flat=True)[:300]
+            bad_users = TwitterFollower.objects.values_list('user_id', flat=True)[:500]
 
         self.stdout.write('Start unfollowing users')
         for bad_user in bad_users:
