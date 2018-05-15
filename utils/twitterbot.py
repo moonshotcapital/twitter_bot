@@ -83,30 +83,30 @@ def retweet_verified_users():
     # get recent 20 tweets for current user
     recent_tweets = api.user_timeline(user.screen_name)
 
-    counter = 0
-    limit = 1  # responsible for how many tweets will be retweeted
-
     if user and user.tags:
         tag = '#{}'.format(random.choice(user.tags))
     else:
         tag = ''
 
+    result = make_retweet(api, recent_tweets, tag=tag)
+    if not result:
+        make_retweet(api, recent_tweets)
+
+
+def make_retweet(api, recent_tweets, tag=''):
     for tweet in recent_tweets:
         tw_text = tweet.text.lower()
 
         if tag in tw_text and not tweet.in_reply_to_status_id and (
-                tweet.lang == 'en' or not tweet.in_reply_to_user_id):
+                tweet.lang == 'en' and not tweet.in_reply_to_user_id):
 
             try:
                 api.retweet(tweet.id)
             except tweepy.error.TweepError as err:
                 if err.api_code == 327 or err.api_code == 185:
                     continue
-
-            counter += 1
-
-        if counter == limit:
-            break
+            return True
+    return False
 
 
 def unfollow_users():
