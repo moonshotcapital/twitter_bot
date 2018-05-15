@@ -46,6 +46,7 @@ INSTALLED_APPS = [
 INSTALLED_APPS += [
     'django_celery_results',
     'django_celery_beat',
+    'django_extensions'
 ]
 
 INSTALLED_APPS += [
@@ -160,10 +161,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'twitterbot.tasks.update_followers_list_task',
         'schedule': crontab(hour=17, minute=0),
     },
-    # 'retweet_task': {
-    #     'task': 'twitterbot.tasks.retweet_task',
-    #     'schedule': crontab(hour=19, minute=0),
-    # },
+    'retweet_task': {
+        'task': 'twitterbot.tasks.retweet_task',
+        'schedule': crontab(hour='8,11,14,17,20', minute=0),
+    },
     'unfollow_users_task': {
         'task': 'twitterbot.tasks.unfollow_users_task',
         'schedule': crontab(hour=16, minute=0),
