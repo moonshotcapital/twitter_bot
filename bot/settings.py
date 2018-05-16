@@ -163,7 +163,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'retweet_task': {
         'task': 'twitterbot.tasks.retweet_task',
-        'schedule': crontab(hour='9,11,14,17,20', minute=45),
+        'schedule': crontab(hour='8,11,14,17,20', minute=45),
     },
     'unfollow_users_task': {
         'task': 'twitterbot.tasks.unfollow_users_task',
@@ -178,9 +178,3 @@ CONSUMER_KEY = os.environ.get('CONSUMER_KEY')
 CONSUMER_SECRET = os.environ.get('CONSUMER_SECRET')
 ACCESS_TOKEN = os.environ.get('ACCESS_TOKEN')
 ACCESS_TOKEN_SECRET = os.environ.get('ACCESS_TOKEN_SECRET')
-
-
-CONSUMER_KEY = '1zATHdrATcjf9y9vXZkoeYiO9'
-CONSUMER_SECRET = 'ScORJjlL28ZtP2jAFp6oZNqKAbWfPFjY9u3gdB4EXRI95Qx3Ls'
-ACCESS_TOKEN = '986864661889941505-CC6dAppEGdkgiXMjbKZfDZqT2YXCtgW'
-ACCESS_TOKEN_SECRET = 'j4pncXp2fixTKcPSArg7D7W710LlI8sNkf472aApo0EYz'
