@@ -22,7 +22,7 @@ ACCESS_TOKEN = settings.ACCESS_TOKEN
 ACCESS_TOKEN_SECRET = settings.ACCESS_TOKEN_SECRET
 
 
-def follow_users(limit=200):
+def follow_users():
     tw_accounts = TargetTwitterAccount.objects.filter(is_follower=False,
                                                       followers_count__gt=800)
 
@@ -39,6 +39,7 @@ def follow_users(limit=200):
         # a sufficient balance of friends and subscribers
         return
 
+    limit = random.randrange(350, 650)
     counter = 0
     for user in tw_accounts:
 
@@ -115,9 +116,12 @@ def unfollow_users():
     api = tweepy.API(auth, wait_on_rate_limit=True,
                      wait_on_rate_limit_notify=True)
 
+    limit = random.randrange(350, 650)
+    logger.info("The limit of unfollowing is set to %s", limit)
+
     # TODO: add logic for getting list of users for unfollowing process
     # list must contain screen_names or user_ids of Twitter User
-    bad_users = TwitterFollower.objects.values_list('user_id', flat=True)[:500]
+    bad_users = TwitterFollower.objects.values_list('user_id', flat=True)[:limit]
 
     for bad_user in bad_users:
         bad_user = api.get_user(bad_user)
