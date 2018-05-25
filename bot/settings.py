@@ -178,3 +178,6 @@ CONSUMER_KEY = os.environ.get('CONSUMER_KEY')
 CONSUMER_SECRET = os.environ.get('CONSUMER_SECRET')
 ACCESS_TOKEN = os.environ.get('ACCESS_TOKEN')
 ACCESS_TOKEN_SECRET = os.environ.get('ACCESS_TOKEN_SECRET')
+
+SLACK_API_TOKEN = os.environ.get('SLACK_API_TOKEN')
+SLACK_CHANNEL = os.environ.get('SLACK_CHANNEL')
