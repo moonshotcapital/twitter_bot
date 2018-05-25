@@ -12,3 +12,4 @@ whitenoise==3.3.1
 django-extensions
 ipdb
 ipython
+slackclient==1.2.1
