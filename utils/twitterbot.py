@@ -1,6 +1,7 @@
 import logging
 import tweepy
 import random
+from datetime import date
 
 from django.conf import settings
 from django.db import IntegrityError
@@ -38,13 +39,14 @@ def send_message_to_slack(message):
 def follow_users():
     tw_accounts = TargetTwitterAccount.objects.filter(is_follower=False,
                                                       followers_count__gt=800)
+    today = date.today()
 
     auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
     api = tweepy.API(auth, wait_on_rate_limit=True,
                      wait_on_rate_limit_notify=True)
 
-    limit = random.randrange(350, 650)
+    limit = random.randrange(200, 350)
     logger.info("The limit of followers is set to %s", limit)
     counter = 0
     for user in tw_accounts:
@@ -86,7 +88,9 @@ def follow_users():
             counter += 1
 
         if counter == limit:
+            text = "Number of followers: {}. Date: {}".format(limit, today)
             logger.info("The limit of %s followings is reached", limit)
+            send_message_to_slack(text)
             return
 
 
@@ -136,13 +140,14 @@ def unfollow_users():
     api = tweepy.API(auth, wait_on_rate_limit=True,
                      wait_on_rate_limit_notify=True)
 
-    limit = random.randrange(350, 650)
+    limit = random.randrange(200, 350)
+    counter = 0
     logger.info("The limit of unfollowing is set to %s", limit)
+    today = date.today()
 
     # TODO: add logic for getting list of users for unfollowing process
     # list must contain screen_names or user_ids of Twitter User
-    bad_users = TwitterFollower.objects.values_list('user_id',
-                                                    flat=True)[:limit]
+    bad_users = TwitterFollower.objects.values_list('user_id', flat=True)
 
     for bad_user in bad_users:
         try:
@@ -161,8 +166,15 @@ def unfollow_users():
 
         # sync our db state due to unfollowing users
         if not result.following:
+            counter += 1
             try:
                 BlackList.objects.create(user_id=bad_user.id)
                 TwitterFollower.objects.filter(user_id=bad_user.id).delete()
             except IntegrityError:
                 continue
+
+        if counter == limit:
+            text = "Number of unfollowers: {}. Date: {}".format(limit, today)
+            logger.info("The limit of %s followings is reached", limit)
+            send_message_to_slack(text)
+            return
