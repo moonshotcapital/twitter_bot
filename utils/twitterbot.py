@@ -64,8 +64,8 @@ def follow_users():
                     continue
                 continue
             elif err.api_code == 89:
-                text = 'Twitter access token is expired. Please,' \
-                       ' refresh it in heroku settings'
+                text = 'Twitter access token has been expired. Please,' \
+                       ' refresh it in Heroku settings'
                 logger.info(text)
                 send_message_to_slack(text)
             else:
@@ -141,13 +141,13 @@ def unfollow_users():
                      wait_on_rate_limit_notify=True)
 
     limit = random.randrange(200, 350)
-    counter = 0
     logger.info("The limit of unfollowing is set to %s", limit)
     today = date.today()
 
     # TODO: add logic for getting list of users for unfollowing process
     # list must contain screen_names or user_ids of Twitter User
-    bad_users = TwitterFollower.objects.values_list('user_id', flat=True)
+    bad_users = TwitterFollower.objects.values_list('user_id',
+                                                    flat=True)[:limit]
 
     for bad_user in bad_users:
         try:
@@ -158,7 +158,7 @@ def unfollow_users():
                 logger.info("User {} not found!".format(bad_user.name))
                 continue
             elif err.api_code == 89:
-                text = 'Twitter access token is expired. Please,' \
+                text = 'Twitter access token has been expired. Please,' \
                        ' refresh it in Heroku settings'
                 logger.info(text)
                 send_message_to_slack(text)
@@ -166,15 +166,13 @@ def unfollow_users():
 
         # sync our db state due to unfollowing users
         if not result.following:
-            counter += 1
             try:
                 BlackList.objects.create(user_id=bad_user.id)
                 TwitterFollower.objects.filter(user_id=bad_user.id).delete()
             except IntegrityError:
                 continue
 
-        if counter == limit:
-            text = "Number of unfollowers: {}. Date: {}".format(limit, today)
-            logger.info("The limit of %s followings is reached", limit)
-            send_message_to_slack(text)
-            return
+    text = "Number of unfollowers: {}. Date: {}".format(limit, today)
+    logger.info(text)
+    send_message_to_slack(text)
+    return
