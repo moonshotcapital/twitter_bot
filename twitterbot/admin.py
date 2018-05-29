@@ -3,7 +3,8 @@ from .models import (
     BlackList,
     TwitterFollower,
     TargetTwitterAccount,
-    VerifiedUserWithTag
+    VerifiedUserWithTag,
+    WhiteListTwitterUser
 )
 
 
@@ -20,3 +21,4 @@ class VerifiedUserWithTagAdmin(admin.ModelAdmin):
 
 admin.site.register(TargetTwitterAccount)
 admin.site.register(BlackList)
+admin.site.register(WhiteListTwitterUser)
