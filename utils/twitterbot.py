@@ -11,7 +11,8 @@ from twitterbot.models import (
     BlackList,
     TargetTwitterAccount,
     TwitterFollower,
-    VerifiedUserWithTag
+    VerifiedUserWithTag,
+    WhiteListTwitterUser
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -145,11 +146,17 @@ def unfollow_users():
     today = date.today()
 
     # TODO: add logic for getting list of users for unfollowing process
-    # list must contain screen_names or user_ids of Twitter User
-    bad_users = TwitterFollower.objects.values_list('user_id',
+    # list must contain screen_names
+    bad_users = TwitterFollower.objects.values_list('screen_name',
                                                     flat=True)[:limit]
 
     for bad_user in bad_users:
+        # check if user exists in our White List
+        in_white_list = WhiteListTwitterUser.objects.filter(
+            screen_name=bad_user).exists()
+        if in_white_list:
+            continue
+
         try:
             bad_user = api.get_user(bad_user)
             result = api.destroy_friendship(bad_user.id)
