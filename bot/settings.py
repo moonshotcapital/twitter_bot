@@ -90,14 +90,13 @@ WSGI_APPLICATION = 'bot.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'twitterdb',
-        'USER': 'twitterbotadmin',
-        'PASSWORD': 'twitterbotadmin2018',
-        'HOST': '',
-        'PORT': 5432,
+        'NAME': os.environ.get('DATABASE_NAME', 'twitterdb'),
+        'USER': os.environ.get('DATABASE_USER', 'twitterbotadmin'),
+        'PASSWORD': os.environ.get('DATABASE_PASSWORD', 'twitterbotadmin2018'),
+        'HOST': os.environ.get('DATABASE_HOST', ''),
+        'PORT': os.environ.get('DATABASE_PORT', 5432),
     }
 }
-
 
 db_from_env = dj_database_url.config(conn_max_age=500)
 DATABASES['default'].update(db_from_env)

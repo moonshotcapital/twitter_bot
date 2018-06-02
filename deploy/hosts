@@ -1,0 +1,3 @@
+web ansible_ssh_user=ubuntu ansible_ssh_host=54.194.86.154 ansible_ssh_port=22
+
+
