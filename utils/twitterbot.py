@@ -52,7 +52,6 @@ def follow_users():
     logger.info("The limit of followers is set to %s", limit)
     counter = 0
     for user in tw_accounts:
-        time.sleep(random.randrange(1, 15, step=1))
         try:
             tw_user = api.get_user(user.user_id)
         except tweepy.error.TweepError as err:
@@ -70,10 +69,13 @@ def follow_users():
                        ' refresh it in Heroku settings'
                 logger.info(text)
                 send_message_to_slack(text)
+            elif err.api_code == 63:
+                continue
             else:
                 raise err
 
         if tw_user.followers_count > 1000:
+            time.sleep(random.randrange(1, 15, step=1))
             logger.info("Follow %s", user)
             try:
                 api.create_friendship(tw_user.id)
@@ -172,6 +174,8 @@ def unfollow_users():
                 logger.info(text)
                 send_message_to_slack(text)
                 return
+            elif err.api_code == 63:
+                continue
 
         # sync our db state due to unfollowing users
         if not result.following:
