@@ -29,6 +29,15 @@
       group: ubuntu  
       recurse: yes
     become: True
+
+  - name: mkdir | Create folder for log files
+    file:
+      dest: "/var/log/{{ proj_name }}"
+      owner: "{{ ansible_ssh_user }}"
+      group: "{{ ansible_ssh_user }}"
+      state: directory
+      mode: 0777
+    become: True
   
   - name: common | Copy .env file
     command: cp "/home/{{ twitter_bot_user}}/.env_twitter_bot" "{{ twitter_bot_proj_path }}/.env"

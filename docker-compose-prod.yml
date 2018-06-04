@@ -20,6 +20,8 @@ services:
     depends_on:
       - redis
     env_file: .env
+    volumes:
+      - /var/log/twitter_bot:/app/logs
     networks:
       - tier
 
