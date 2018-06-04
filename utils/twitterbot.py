@@ -1,6 +1,7 @@
 import logging
 import tweepy
 import random
+import time
 from datetime import date
 
 from django.conf import settings
@@ -47,11 +48,11 @@ def follow_users():
     api = tweepy.API(auth, wait_on_rate_limit=True,
                      wait_on_rate_limit_notify=True)
 
-    limit = random.randrange(200, 350)
+    limit = random.randrange(50, 100)
     logger.info("The limit of followers is set to %s", limit)
     counter = 0
     for user in tw_accounts:
-
+        time.sleep(random.randrange(1, 15, step=1))
         try:
             tw_user = api.get_user(user.user_id)
         except tweepy.error.TweepError as err:
@@ -141,7 +142,7 @@ def unfollow_users():
     api = tweepy.API(auth, wait_on_rate_limit=True,
                      wait_on_rate_limit_notify=True)
 
-    limit = random.randrange(200, 350)
+    limit = random.randrange(50, 100)
     logger.info("The limit of unfollowing is set to %s", limit)
     today = date.today()
 
@@ -151,6 +152,7 @@ def unfollow_users():
                                                     flat=True)[:limit]
 
     for bad_user in bad_users:
+        time.sleep(random.randrange(1, 15, step=1))
         # check if user exists in our White List
         in_white_list = WhiteListTwitterUser.objects.filter(
             screen_name=bad_user).exists()
