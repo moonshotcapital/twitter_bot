@@ -1,0 +1,37 @@
+version: '3'
+
+services:
+  web:
+    build: .
+    command: /gunicorn.sh
+    env_file: .env
+    volumes:
+      - .:/app
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      - redis
+    networks:
+      - tier
+
+  celerybeat: 
+    build: .
+    command: /start-celerybeat.sh
+    depends_on:
+      - redis
+    env_file: .env
+    networks:
+      - tier
+
+  redis:
+    image: redis
+    volumes:
+      - redis_data:/data
+    networks:
+      - tier
+
+volumes:
+  redis_data:
+
+networks:
+  tier:

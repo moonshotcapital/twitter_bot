@@ -1,0 +1,94 @@
+---
+- hosts: web
+  vars:
+    proj_name: twitter_bot
+    twitter_bot_user: "{{ ansible_ssh_user }}"
+    twitter_bot_checkout_dir: "/opt"
+    twitter_bot_repo_url: "git@github.com:moonshotcapital/twitter_bot.git"
+    twitter_bot_proj_path: "{{ twitter_bot_checkout_dir }}/twitter_bot"
+    twitter_bot_branch: "{{lookup('env','BRANCH_DEPLOY')|default('master', true)}}"
+    twitter_bot_id: "/home/{{ twitter_bot_user }}/.ssh/id_rsa"
+    docker_file_name: "{{lookup('env','DOCKER_FILE_NAME')|default('docker-compose-prod.yml',true)}}"
+    main_docker_file: "{{ twitter_bot_proj_path }}/{{ docker_file_name }}"  
+  tasks:
+  - name: git | Checkout repository on the host
+    git:
+      repo: "{{ twitter_bot_repo_url }}"
+      dest: "{{ twitter_bot_proj_path }}"
+      accept_hostkey: yes
+      key_file: "{{ twitter_bot_id }}"
+      update: yes
+      force: yes
+      version: "{{ twitter_bot_branch }}"
+    become: True
+  
+  - name: chown | Update access
+    file: 
+      dest: "{{ twitter_bot_proj_path }}" 
+      owner: ubuntu
+      group: ubuntu  
+      recurse: yes
+    become: True
+  
+  - name: common | Copy .env file
+    command: cp "/home/{{ twitter_bot_user}}/.env_twitter_bot" "{{ twitter_bot_proj_path }}/.env"
+  
+  - name: common | Install additional packages
+    apt:
+      pkg: "{{ item }}"
+      update_cache: yes
+      cache_valid_time: 3600
+      state: present
+    with_items:
+      - python-pip
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - software-properties-common
+    become: True
+  
+  - name: docker | Install keys
+    apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      state: present
+    become: True
+  
+  - name: docker | Add docker ce repository
+    apt_repository:
+      repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu "{{ ansible_lsb.codename }}" stable
+      state: present
+    become: True
+  
+  - name: docker | Install docker ce
+    apt:
+      update_cache: yes
+      pkg:  docker-ce
+    become: True
+  
+  - name: docker | Install python docker-compose
+    pip:
+      name: "{{ item }}"
+      state: latest
+    with_items:
+      - docker==2.7.0
+      - docker-compose==1.18.0
+      - pip==10.0.1
+    become: True
+  
+  - name: docker | Docker build
+    shell: |
+      docker-compose -f "{{ docker_file_name }}" up -d --build
+    args:
+      chdir: "{{ twitter_bot_proj_path }}"
+    become: True
+  
+  - name: docker | Post docker build
+    shell: |
+      docker-compose -f {{ docker_file_name }} run web python /app/manage.py migrate &&
+      docker-compose -f {{ docker_file_name }} run web python /app/manage.py collectstatic --noinput
+    ignore_errors: True
+    args:
+      chdir: "{{ twitter_bot_proj_path }}"
+    become: True
+  
+  
