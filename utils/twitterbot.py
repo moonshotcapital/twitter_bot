@@ -1,6 +1,7 @@
 import logging
 import tweepy
 import random
+import requests
 import time
 from datetime import date
 
@@ -36,6 +37,15 @@ def send_message_to_slack(message):
         username='@twitter-notifier'
     )
     logger.info('Sent message to slack: {}'.format(message))
+
+
+def send_message_to_telegram(message):
+    chat_id = settings.TELEGRAM_CHAT_ID
+    token = settings.TELEGRAM_NOTIFICATIONS_TOKEN
+    url = "https://api.telegram.org/bot{}/sendMessage".format(token)
+    r = requests.post(url, data={'chat_id': chat_id, 'text': message})
+    r.raise_for_status()
+    logger.info('Sent message to telegram: {}'.format(message))
 
 
 def follow_users():
@@ -95,6 +105,7 @@ def follow_users():
             text = "Number of followers: {}. Date: {}".format(limit, today)
             logger.info("The limit of %s followings is reached", limit)
             send_message_to_slack(text)
+            send_message_to_telegram(text)
             return
 
 
@@ -175,17 +186,21 @@ def unfollow_users():
                 send_message_to_slack(text)
                 return
             elif err.api_code == 63:
+                logger.info("User has been suspended. Error code: 63")
                 continue
 
         # sync our db state due to unfollowing users
         if not result.following:
+            logger.info("Unfollow {}".format(bad_user))
             try:
                 BlackList.objects.create(user_id=bad_user.id)
                 TwitterFollower.objects.filter(user_id=bad_user.id).delete()
             except IntegrityError:
+                logger.exception('Integrity Error during unfollowing')
                 continue
 
     text = "Number of unfollowers: {}. Date: {}".format(limit, today)
     logger.info(text)
     send_message_to_slack(text)
+    send_message_to_telegram(text)
     return
