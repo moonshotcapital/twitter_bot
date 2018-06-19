@@ -154,52 +154,52 @@ def unfollow_users():
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
     api = tweepy.API(auth, wait_on_rate_limit=True,
                      wait_on_rate_limit_notify=True)
-
-    limit = random.randrange(50, 100)
+    me = api.me()
+    limit = random.randrange(100, 150)
     logger.info("The limit of unfollowing is set to %s", limit)
     today = date.today()
 
-    # TODO: add logic for getting list of users for unfollowing process
-    # list must contain screen_names
-    bad_users = TwitterFollower.objects.values_list('screen_name',
-                                                    flat=True)[:limit]
+    followers_list = api.followers_ids()
+    friends_list = api.friends_ids()
 
-    for bad_user in bad_users:
+    count = 0
+    for friend in friends_list:
         time.sleep(random.randrange(1, 15, step=1))
-        # check if user exists in our White List
-        in_white_list = WhiteListTwitterUser.objects.filter(
-            screen_name=bad_user).exists()
-        if in_white_list:
-            continue
-
-        try:
-            bad_user = api.get_user(bad_user)
-            result = api.destroy_friendship(bad_user.id)
-        except tweepy.error.TweepError as err:
-            if err.api_code == 50:
-                logger.info("User {} not found!".format(bad_user.name))
-                continue
-            elif err.api_code == 89:
-                text = 'Twitter access token has been expired. Please,' \
-                       ' refresh it in Heroku settings'
-                logger.info(text)
-                send_message_to_slack(text)
-                return
-            elif err.api_code == 63:
-                logger.info("User has been suspended. Error code: 63")
-                continue
-
-        # sync our db state due to unfollowing users
-        if not result.following:
-            logger.info("Unfollow {}".format(bad_user))
+        if friend not in followers_list:
             try:
-                BlackList.objects.create(user_id=bad_user.id)
-                TwitterFollower.objects.filter(user_id=bad_user.id).delete()
-            except IntegrityError:
-                logger.exception('Integrity Error during unfollowing')
-                continue
+                api.destroy_friendship(friend)
+            except tweepy.error.TweepError as err:
+                if err.api_code == 50:
+                    logger.info("User {} not found!".format(friend))
+                    continue
+                elif err.api_code == 89:
+                    text = 'Twitter access token has been expired. Please,' \
+                           ' refresh it in Heroku settings'
+                    logger.info(text)
+                    send_message_to_slack(text)
+                    return
+                elif err.api_code == 63:
+                    logger.info("User has been suspended. Error code: 63")
+                    continue
 
-    text = "Number of unfollowers: {}. Date: {}".format(limit, today)
+            user = api.get_user(friend)
+            friendship = api.show_friendship(user.id, user.screen_name, me.id,
+                                             me.screen_name)[0]
+
+            if not friendship.followed_by:
+                logger.info("Unfollow {}".format(friend))
+                count += 1
+                try:
+                    BlackList.objects.create(user_id=friend)
+                    TwitterFollower.objects.filter(user_id=friend).delete()
+                except IntegrityError:
+                    logger.exception('Integrity Error during unfollowing')
+                    continue
+
+        if count == limit:
+            break
+
+    text = "Number of unfollowers: {}. Date: {}".format(count, today)
     logger.info(text)
     send_message_to_slack(text)
     send_message_to_telegram(text)
