@@ -11,6 +11,9 @@ class AccountOwner(models.Model):
                                            blank=True)
     is_active = models.BooleanField(default=False)
 
+    def __str__(self):
+        return self.screen_name
+
 
 class TwitterFollower(models.Model):
 

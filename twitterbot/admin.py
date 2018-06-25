@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import (
+    AccountOwner,
     BlackList,
     TwitterFollower,
     TargetTwitterAccount,
@@ -22,3 +23,4 @@ class VerifiedUserWithTagAdmin(admin.ModelAdmin):
 admin.site.register(TargetTwitterAccount)
 admin.site.register(BlackList)
 admin.site.register(WhiteListTwitterUser)
+admin.site.register(AccountOwner)
