@@ -2,6 +2,16 @@ from django.db import models
 from django.contrib.postgres.fields import ArrayField
 
 
+class AccountOwner(models.Model):
+    screen_name = models.CharField(max_length=50, unique=True)
+    consumer_key = models.CharField(max_length=50, null=True, blank=True)
+    consumer_secret = models.CharField(max_length=50, null=True, blank=True)
+    access_token = models.CharField(max_length=50, null=True, blank=True)
+    access_token_secret = models.CharField(max_length=50, null=True,
+                                           blank=True)
+    is_active = models.BooleanField(default=False)
+
+
 class TwitterFollower(models.Model):
 
     FRIEND = 1
@@ -18,6 +28,8 @@ class TwitterFollower(models.Model):
     location = models.CharField(max_length=200, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     updated = models.DateTimeField(auto_now=True)
+    account_owner = models.ForeignKey(AccountOwner, on_delete=models.CASCADE,
+                                      null=True)
 
     class Meta:
         db_table = 'twitter_followers'
@@ -34,6 +46,8 @@ class TargetTwitterAccount(models.Model):
     is_follower = models.BooleanField(default=False)
 
     location = models.CharField(max_length=200, blank=True, null=True)
+    account_owner = models.ForeignKey(AccountOwner, on_delete=models.CASCADE,
+                                      null=True)
 
     class Meta:
         db_table = 'target_twitter_accounts'
@@ -47,6 +61,8 @@ class BlackList(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     reason = models.CharField(max_length=500, null=True, blank=True)
+    account_owner = models.ForeignKey(AccountOwner, on_delete=models.CASCADE,
+                                      null=True)
 
     class Meta:
         db_table = 'twitter_blacklist'
@@ -62,6 +78,8 @@ class VerifiedUserWithTag(models.Model):
 
     screen_name = models.CharField(max_length=50, unique=True)
     tags = ArrayField(models.CharField(max_length=50), null=True, blank=True)
+    account_owner = models.ForeignKey(AccountOwner, on_delete=models.CASCADE,
+                                      null=True)
 
     class Meta:
         db_table = 'twitter_users_with_tags'
@@ -74,6 +92,8 @@ class WhiteListTwitterUser(models.Model):
     screen_name = models.CharField(max_length=50)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+    account_owner = models.ForeignKey(AccountOwner, on_delete=models.CASCADE,
+                                      null=True)
 
     class Meta:
         db_table = 'white_list'
