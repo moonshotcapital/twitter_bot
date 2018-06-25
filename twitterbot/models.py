@@ -36,13 +36,14 @@ class TwitterFollower(models.Model):
 
     class Meta:
         db_table = 'twitter_followers'
+        unique_together = ('screen_name', 'account_owner', 'user_type')
 
     def __str__(self):
         return self.screen_name
 
 
 class TargetTwitterAccount(models.Model):
-    user_id = models.CharField(max_length=50, unique=True)
+    user_id = models.CharField(max_length=50)
     name = models.CharField(max_length=100)
     screen_name = models.CharField(max_length=50)
     followers_count = models.PositiveIntegerField(null=True)
@@ -54,13 +55,14 @@ class TargetTwitterAccount(models.Model):
 
     class Meta:
         db_table = 'target_twitter_accounts'
+        unique_together = ('user_id', 'account_owner')
 
     def __str__(self):
         return self.screen_name
 
 
 class BlackList(models.Model):
-    user_id = models.CharField(max_length=50, unique=True, null=True)
+    user_id = models.CharField(max_length=50, null=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     reason = models.CharField(max_length=500, null=True, blank=True)
@@ -69,6 +71,7 @@ class BlackList(models.Model):
 
     class Meta:
         db_table = 'twitter_blacklist'
+        unique_together = ('user_id', 'account_owner')
 
     def __str__(self):
         return '{} - {}'.format(self.user_id, self.reason)
@@ -79,13 +82,14 @@ class VerifiedUserWithTag(models.Model):
     This model contains users whom we are going to retweet using tags
     """
 
-    screen_name = models.CharField(max_length=50, unique=True)
+    screen_name = models.CharField(max_length=50)
     tags = ArrayField(models.CharField(max_length=50), null=True, blank=True)
     account_owner = models.ForeignKey(AccountOwner, on_delete=models.CASCADE,
                                       null=True)
 
     class Meta:
         db_table = 'twitter_users_with_tags'
+        unique_together = ('screen_name', 'account_owner')
 
     def __str__(self):
         return self.screen_name
