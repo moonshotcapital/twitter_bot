@@ -105,8 +105,10 @@ def follow_users():
                 except tweepy.error.TweepError as err:
                     if err.api_code == 161:
                         text = "Unable to follow more people at this time. " \
-                               "Account must have a sufficient balance of " \
-                               "friends and subscribers"
+                               "Account {} must have a sufficient balance of" \
+                               " friends and subscribers".format(
+                                    account.screen_name
+                                )
                         logger.info(text)
                         send_message_to_slack(text)
                         break
@@ -115,7 +117,8 @@ def follow_users():
                 counter += 1
 
             if counter == limit:
-                text = "Number of followers: {}. Date: {}".format(limit, today)
+                text = "Account: {}. Number of followers: {}." \
+                       " Date: {}".format(account.screen_name, limit, today)
                 logger.info("The limit of %s followings is reached", limit)
                 send_message_to_slack(text)
                 send_message_to_telegram(text)
