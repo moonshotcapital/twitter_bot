@@ -14,7 +14,8 @@ from twitterbot.models import (
     TargetTwitterAccount,
     TwitterFollower,
     VerifiedUserWithTag,
-    WhiteListTwitterUser
+    WhiteListTwitterUser,
+    AccountOwner
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -49,64 +50,77 @@ def send_message_to_telegram(message):
 
 
 def follow_users():
-    tw_accounts = TargetTwitterAccount.objects.filter(is_follower=False,
-                                                      followers_count__gt=800)
-    today = date.today()
 
-    auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
-    auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
-    api = tweepy.API(auth, wait_on_rate_limit=True,
-                     wait_on_rate_limit_notify=True)
+    tw_accounts = AccountOwner.objects.filter(is_active=True)
+    for account in tw_accounts:
+        logger.info('Start follow for {}'.format(account.screen_name))
+        consumer_key = account.consumer_key
+        consumer_secret = account.consumer_secret
+        access_token = account.access_token
+        access_token_secret = account.access_token_secret
 
-    limit = random.randrange(20, 30)
-    logger.info("The limit of followers is set to %s", limit)
-    counter = 0
-    for user in tw_accounts:
-        try:
-            tw_user = api.get_user(user.user_id)
-        except tweepy.error.TweepError as err:
-            if err.api_code == 50:
-                logger.info("User {} not found!".format(user.name))
-                try:
-                    BlackList.objects.create(user_id=user.user_id,
-                                             reason="User not found!")
-                    TargetTwitterAccount.objects.filter(user_id=user.user_id).delete()
-                except IntegrityError:
-                    continue
-                continue
-            elif err.api_code == 89:
-                text = 'Twitter access token has been expired. Please,' \
-                       ' refresh it in Heroku settings'
-                logger.info(text)
-                send_message_to_slack(text)
-            elif err.api_code == 63:
-                continue
-            else:
-                raise err
+        tw_accounts = TargetTwitterAccount.objects.filter(
+            is_follower=False, followers_count__gt=800, account_owner=account)
+        today = date.today()
 
-        if tw_user.followers_count > 1000:
-            time.sleep(random.randrange(1, 15, step=1))
-            logger.info("Follow %s", user)
+        auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+        auth.set_access_token(access_token, access_token_secret)
+        api = tweepy.API(auth, wait_on_rate_limit=True,
+                         wait_on_rate_limit_notify=True)
+
+        limit = random.randrange(20, 30)
+        logger.info("The limit of followers is set to %s", limit)
+        counter = 0
+        for user in tw_accounts:
             try:
-                api.create_friendship(tw_user.id)
+                tw_user = api.get_user(user.user_id)
             except tweepy.error.TweepError as err:
-                if err.api_code == 161:
-                    text = "Unable to follow more people at this time. " \
-                           "Account must have a sufficient balance of " \
-                           "friends and subscribers"
+                if err.api_code == 50:
+                    logger.info("User {} not found!".format(user.name))
+                    try:
+                        BlackList.objects.create(user_id=user.user_id,
+                                                 reason="User not found!",
+                                                 account_owner=account)
+                        TargetTwitterAccount.objects.filter(
+                            user_id=user.user_id, account_owner=account
+                        ).delete()
+                    except IntegrityError:
+                        continue
+                    continue
+                elif err.api_code == 89:
+                    text = 'Twitter access token has been expired. Please,' \
+                           ' refresh it in Heroku settings'
                     logger.info(text)
                     send_message_to_slack(text)
-                    return
-            user.is_follower = True
-            user.save(update_fields=('is_follower', ))
-            counter += 1
+                elif err.api_code == 63:
+                    continue
+                else:
+                    raise err
 
-        if counter == limit:
-            text = "Number of followers: {}. Date: {}".format(limit, today)
-            logger.info("The limit of %s followings is reached", limit)
-            send_message_to_slack(text)
-            send_message_to_telegram(text)
-            return
+            if tw_user.followers_count > 1000:
+                time.sleep(random.randrange(1, 15, step=1))
+                logger.info("Follow %s", user)
+                try:
+                    api.create_friendship(tw_user.id)
+                except tweepy.error.TweepError as err:
+                    if err.api_code == 161:
+                        text = "Unable to follow more people at this time. " \
+                               "Account must have a sufficient balance of " \
+                               "friends and subscribers"
+                        logger.info(text)
+                        send_message_to_slack(text)
+                        break
+                user.is_follower = True
+                user.save(update_fields=('is_follower', ))
+                counter += 1
+
+            if counter == limit:
+                text = "Number of followers: {}. Date: {}".format(limit, today)
+                logger.info("The limit of %s followings is reached", limit)
+                send_message_to_slack(text)
+                send_message_to_telegram(text)
+                break
+        logger.info('Finish follow for {}'.format(account.screen_name))
 
 
 def retweet_verified_users():
@@ -150,57 +164,68 @@ def make_retweet(api, recent_tweets, tag=''):
 
 
 def unfollow_users():
-    auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
-    auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
-    api = tweepy.API(auth, wait_on_rate_limit=True,
-                     wait_on_rate_limit_notify=True)
-    me = api.me()
-    limit = random.randrange(150, 200)
-    logger.info("The limit of unfollowing is set to %s", limit)
-    today = date.today()
+    tw_accounts = AccountOwner.objects.filter(is_active=True)
+    for account in tw_accounts:
+        logger.info('Start unfollow for {}'.format(account.screen_name))
+        consumer_key = account.consumer_key
+        consumer_secret = account.consumer_secret
+        access_token = account.access_token
+        access_token_secret = account.access_token_secret
 
-    followers_list = api.followers_ids()
-    friends_list = api.friends_ids()
+        auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+        auth.set_access_token(access_token, access_token_secret)
+        api = tweepy.API(auth, wait_on_rate_limit=True,
+                         wait_on_rate_limit_notify=True)
+        me = api.me()
+        limit = random.randrange(150, 200)
+        logger.info("The limit of unfollowing is set to %s", limit)
+        today = date.today()
 
-    count = 0
-    for friend in friends_list:
-        time.sleep(random.randrange(1, 15, step=1))
-        if friend not in followers_list:
-            try:
-                api.destroy_friendship(friend)
-            except tweepy.error.TweepError as err:
-                if err.api_code == 50:
-                    logger.info("User {} not found!".format(friend))
-                    continue
-                elif err.api_code == 89:
-                    text = 'Twitter access token has been expired. Please,' \
-                           ' refresh it in Heroku settings'
-                    logger.info(text)
-                    send_message_to_slack(text)
-                    return
-                elif err.api_code == 63:
-                    logger.info("User has been suspended. Error code: 63")
-                    continue
+        followers_list = api.followers_ids()
+        friends_list = api.friends_ids()
 
-            user = api.get_user(friend)
-            friendship = api.show_friendship(user.id, user.screen_name, me.id,
-                                             me.screen_name)[0]
-
-            if not friendship.followed_by:
-                logger.info("Unfollow {}".format(friend))
-                count += 1
+        count = 0
+        for friend in friends_list:
+            time.sleep(random.randrange(1, 15, step=1))
+            if friend not in followers_list:
                 try:
-                    BlackList.objects.create(user_id=friend)
-                    TwitterFollower.objects.filter(user_id=friend).delete()
-                except IntegrityError:
-                    logger.exception('Integrity Error during unfollowing')
-                    continue
+                    api.destroy_friendship(friend)
+                except tweepy.error.TweepError as err:
+                    if err.api_code == 50:
+                        logger.info("User {} not found!".format(friend))
+                        continue
+                    elif err.api_code == 89:
+                        text = 'Twitter access token has been expired. ' \
+                               'Please, refresh it!'
+                        logger.info(text)
+                        send_message_to_slack(text)
+                        break
+                    elif err.api_code == 63:
+                        logger.info("User has been suspended. Error code: 63")
+                        continue
 
-        if count == limit:
-            break
+                user = api.get_user(friend)
+                friendship = api.show_friendship(user.id, user.screen_name,
+                                                 me.id, me.screen_name)[0]
 
-    text = "Number of unfollowers: {}. Date: {}".format(count, today)
-    logger.info(text)
-    send_message_to_slack(text)
-    send_message_to_telegram(text)
-    return
+                if not friendship.followed_by:
+                    logger.info("Unfollow {}".format(friend))
+                    count += 1
+                    try:
+                        BlackList.objects.create(user_id=friend,
+                                                 account_owner=account)
+                        TwitterFollower.objects.filter(
+                            user_id=friend, account_owner=account).delete()
+                    except IntegrityError:
+                        logger.exception('Integrity Error during unfollowing')
+                        continue
+
+            if count == limit:
+                break
+
+        text = "Account: {}. Number of unfollowers: {}. Date: {}".format(
+            account.screen_name, count, today)
+        logger.info(text)
+        send_message_to_slack(text)
+        send_message_to_telegram(text)
+        logger.info('Finish unfollow for {}'.format(account.screen_name))
