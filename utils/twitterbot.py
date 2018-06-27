@@ -70,7 +70,7 @@ def make_follow_for_current_account(account_screen_name):
         api = tweepy.API(auth, wait_on_rate_limit=True,
                          wait_on_rate_limit_notify=True)
 
-        limit = random.randrange(20, 30)
+        limit = random.randrange(90, 100)
         logger.info("The limit of followers is set to %s", limit)
         counter = 0
         for user in tw_accounts:
@@ -180,7 +180,7 @@ def make_unfollow_for_current_account(account_screen_name):
         api = tweepy.API(auth, wait_on_rate_limit=True,
                          wait_on_rate_limit_notify=True)
         me = api.me()
-        limit = random.randrange(150, 200)
+        limit = random.randrange(90, 100)
         logger.info("The limit of unfollowing is set to %s", limit)
         today = date.today()
 
