@@ -8,7 +8,9 @@ def get_followers(twitter_user):
     followers_count += len(tw_followers_list[0])
     next_cursor = tw_followers_list[1][1]
 
-    while followers_count < twitter_user.followers_count:
+    followers_for_one_rate_limit_window = 3000
+
+    while followers_count < followers_for_one_rate_limit_window:
         tw_followers_list = twitter_user.followers(cursor=next_cursor,
                                                    count=200)
         followers += tw_followers_list[0]
@@ -29,7 +31,9 @@ def get_friends(twitter_user):
     friends_count += len(tw_friends_list[0])
     next_cursor = tw_friends_list[1][1]
 
-    while friends_count < twitter_user.friends_count:
+    friends_for_one_rate_limit_window = 3000
+
+    while friends_count < friends_for_one_rate_limit_window:
         tw_friends_list = twitter_user.friends(
             cursor=next_cursor,
             count=200

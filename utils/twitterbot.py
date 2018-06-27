@@ -17,6 +17,7 @@ from twitterbot.models import (
     WhiteListTwitterUser,
     AccountOwner
 )
+from utils.common import load_function
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -26,6 +27,7 @@ CONSUMER_KEY = settings.CONSUMER_KEY
 CONSUMER_SECRET = settings.CONSUMER_SECRET
 ACCESS_TOKEN = settings.ACCESS_TOKEN
 ACCESS_TOKEN_SECRET = settings.ACCESS_TOKEN_SECRET
+TWITTER_ACCOUNT_SETTINGS = settings.TWITTER_ACCOUNT_SETTINGS
 
 
 def send_message_to_slack(message):
@@ -49,10 +51,10 @@ def send_message_to_telegram(message):
     logger.info('Sent message to telegram: {}'.format(message))
 
 
-def follow_users():
-
-    tw_accounts = AccountOwner.objects.filter(is_active=True)
-    for account in tw_accounts:
+def make_follow_for_current_account(account_screen_name):
+    account = AccountOwner.objects.get(is_active=True,
+                                       screen_name=account_screen_name)
+    if account:
         logger.info('Start follow for {}'.format(account.screen_name))
         consumer_key = account.consumer_key
         consumer_secret = account.consumer_secret
@@ -68,7 +70,7 @@ def follow_users():
         api = tweepy.API(auth, wait_on_rate_limit=True,
                          wait_on_rate_limit_notify=True)
 
-        limit = random.randrange(20, 30)
+        limit = random.randrange(90, 100)
         logger.info("The limit of followers is set to %s", limit)
         counter = 0
         for user in tw_accounts:
@@ -166,9 +168,10 @@ def make_retweet(api, recent_tweets, tag=''):
     return False
 
 
-def unfollow_users():
-    tw_accounts = AccountOwner.objects.filter(is_active=True)
-    for account in tw_accounts:
+def make_unfollow_for_current_account(account_screen_name):
+    account = AccountOwner.objects.get(is_active=True,
+                                       screen_name=account_screen_name)
+    if account:
         logger.info('Start unfollow for {}'.format(account.screen_name))
         consumer_key = account.consumer_key
         consumer_secret = account.consumer_secret
@@ -180,7 +183,7 @@ def unfollow_users():
         api = tweepy.API(auth, wait_on_rate_limit=True,
                          wait_on_rate_limit_notify=True)
         me = api.me()
-        limit = random.randrange(150, 200)
+        limit = random.randrange(90, 100)
         logger.info("The limit of unfollowing is set to %s", limit)
         today = date.today()
 
@@ -232,3 +235,23 @@ def unfollow_users():
         send_message_to_slack(text)
         send_message_to_telegram(text)
         logger.info('Finish unfollow for {}'.format(account.screen_name))
+
+
+def follow():
+    tw_accounts = AccountOwner.objects.filter(is_active=True)
+    for user in tw_accounts:
+        allowed_actions = TWITTER_ACCOUNT_SETTINGS.get(user.screen_name)
+        if 'follow' in allowed_actions.keys():
+            follow_function = allowed_actions.get('follow')
+            make_follow = load_function(follow_function)
+            make_follow(user.screen_name)
+
+
+def unfollow():
+    tw_accounts = AccountOwner.objects.filter(is_active=True)
+    for user in tw_accounts:
+        allowed_actions = TWITTER_ACCOUNT_SETTINGS.get(user.screen_name)
+        if 'unfollow' in allowed_actions.keys():
+            unfollow_function = allowed_actions.get('unfollow')
+            make_unfollow = load_function(unfollow_function)
+            make_unfollow(user.screen_name)

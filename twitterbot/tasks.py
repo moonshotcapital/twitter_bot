@@ -1,6 +1,6 @@
 from celery import task
 from celery.utils.log import get_task_logger
-from utils.twitterbot import follow_users, retweet_verified_users, unfollow_users
+from utils.twitterbot import follow, retweet_verified_users, unfollow
 from utils.sync_followers import update_twitter_followers_list
 
 logger = get_task_logger(__name__)
@@ -8,7 +8,7 @@ logger = get_task_logger(__name__)
 @task
 def follow_people():
     logger.info('Started following people!')
-    follow_users()
+    follow()
     logger.info('Finished following people!')
 
 
@@ -29,5 +29,5 @@ def retweet_task():
 @task
 def unfollow_users_task():
     logger.info('Started unfollowing users!')
-    unfollow_users()
+    unfollow()
     logger.info('Finished unfollowing users!')
