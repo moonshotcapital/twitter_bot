@@ -183,3 +183,14 @@ SLACK_CHANNEL = os.environ.get('SLACK_CHANNEL')
 
 TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID')
 TELEGRAM_NOTIFICATIONS_TOKEN = os.environ.get('TELEGRAM_NOTIFICATIONS_TOKEN')
+
+TWITTER_ACCOUNT_SETTINGS = {
+    'MoonshotLtd': {
+        # 'unfollow': 'utils.twitterbot.make_unfollow_for_current_account',
+        'follow': 'utils.twitterbot.make_follow_for_current_account'
+    },
+    'a_soldatenko': {
+        'unfollow': 'utils.twitterbot.make_unfollow_for_current_account',
+        'follow': 'utils.twitterbot.make_follow_for_current_account'
+    },
+}
