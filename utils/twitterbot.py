@@ -91,15 +91,18 @@ def make_follow_for_current_account(account_screen_name):
                     continue
                 elif err.api_code == 89:
                     text = 'Twitter access token has been expired. Please,' \
-                           ' refresh it in Heroku settings'
+                           ' refresh it for {}'.format(account.screen_name)
                     logger.info(text)
                     send_message_to_slack(text)
+                    send_message_to_telegram(text)
+                    break
                 elif err.api_code == 63:
+                    logger.info("User has been suspended. Error code: 63")
                     continue
                 else:
                     raise err
 
-            if tw_user.followers_count > 1000:
+            if tw_user and tw_user.followers_count > 1000:
                 time.sleep(random.randrange(1, 15, step=1))
                 logger.info("Follow %s", user)
                 try:
@@ -113,6 +116,7 @@ def make_follow_for_current_account(account_screen_name):
                                 )
                         logger.info(text)
                         send_message_to_slack(text)
+                        send_message_to_telegram(text)
                         break
                 user.is_follower = True
                 user.save(update_fields=('is_follower', ))
@@ -201,10 +205,13 @@ def make_unfollow_for_current_account(account_screen_name):
                         logger.info("User {} not found!".format(friend))
                         continue
                     elif err.api_code == 89:
-                        text = 'Twitter access token has been expired. ' \
-                               'Please, refresh it!'
+                        text = 'Twitter access token has been expired.' \
+                               'Please, refresh it for {}'.format(
+                                me.screen_name
+                                )
                         logger.info(text)
                         send_message_to_slack(text)
+                        send_message_to_telegram(text)
                         break
                     elif err.api_code == 63:
                         logger.info("User has been suspended. Error code: 63")
@@ -244,7 +251,11 @@ def follow():
         if 'follow' in allowed_actions.keys():
             follow_function = allowed_actions.get('follow')
             make_follow = load_function(follow_function)
-            make_follow(user.screen_name)
+            try:
+                make_follow(user.screen_name)
+            except tweepy.error.TweepError as err:
+                logger.exception('{}'.format(err.reason))
+                continue
 
 
 def unfollow():
@@ -254,4 +265,8 @@ def unfollow():
         if 'unfollow' in allowed_actions.keys():
             unfollow_function = allowed_actions.get('unfollow')
             make_unfollow = load_function(unfollow_function)
-            make_unfollow(user.screen_name)
+            try:
+                make_unfollow(user.screen_name)
+            except tweepy.error.TweepError as err:
+                logger.exception('{}'.format(err.reason))
+                continue

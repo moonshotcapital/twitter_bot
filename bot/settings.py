@@ -158,7 +158,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'update_followers_list_task': {
         'task': 'twitterbot.tasks.update_followers_list_task',
-        'schedule': crontab(hour=17, minute=0),
+        'schedule': crontab(hour=17, minute=30),
     },
     # 'retweet_task': {
     #     'task': 'twitterbot.tasks.retweet_task',
