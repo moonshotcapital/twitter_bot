@@ -184,13 +184,18 @@ SLACK_CHANNEL = os.environ.get('SLACK_CHANNEL')
 TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID')
 TELEGRAM_NOTIFICATIONS_TOKEN = os.environ.get('TELEGRAM_NOTIFICATIONS_TOKEN')
 
+# followers_limit -> this values is used for limit of number of followers and
+# unfollowers. random.randrange(limit, limit+10)
 TWITTER_ACCOUNT_SETTINGS = {
-    'MoonshotLtd': {
-        # 'unfollow': 'utils.twitterbot.make_unfollow_for_current_account',
-        'follow': 'utils.twitterbot.make_follow_for_current_account'
-    },
     'a_soldatenko': {
-        'unfollow': 'utils.twitterbot.make_unfollow_for_current_account',
-        'follow': 'utils.twitterbot.make_follow_for_current_account'
+        'unfollow': ['utils.twitterbot.make_unfollow_for_current_account'],
+        'follow': ['utils.twitterbot.make_follow_for_current_account'],
+        'followers_limit': 50
+    },
+    'goformoonshot': {
+        'unfollow': ['utils.twitterbot.make_unfollow_for_current_account'],
+        'follow': ['utils.twitterbot.make_follow_for_current_account',
+                   'utils.twitterbot.follow_all_own_followers'],
+        'followers_limit': 50
     },
 }
