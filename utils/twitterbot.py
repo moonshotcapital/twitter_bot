@@ -264,7 +264,6 @@ def follow():
                                                 screen_name=user).exists()
         if is_active and 'follow' in allowed_actions.keys():
             for follow_func in allowed_actions.get('follow'):
-                import ipdb; ipdb.set_trace()
                 make_follow = load_function(follow_func)
                 limit = allowed_actions.get('followers_limit')
                 try:
