@@ -51,7 +51,7 @@ def send_message_to_telegram(message):
     logger.info('Sent message to telegram: {}'.format(message))
 
 
-def make_follow_for_current_account(account_screen_name):
+def make_follow_for_current_account(account_screen_name, limit):
     account = AccountOwner.objects.get(is_active=True,
                                        screen_name=account_screen_name)
     if account:
@@ -70,7 +70,7 @@ def make_follow_for_current_account(account_screen_name):
         api = tweepy.API(auth, wait_on_rate_limit=True,
                          wait_on_rate_limit_notify=True)
 
-        limit = random.randrange(90, 100)
+        limit = random.randrange(limit, limit+10)
         logger.info("The limit of followers is set to %s", limit)
         counter = 0
         for user in tw_accounts:
@@ -104,7 +104,6 @@ def make_follow_for_current_account(account_screen_name):
 
             if tw_user and tw_user.followers_count > 1000:
                 time.sleep(random.randrange(1, 15, step=1))
-                logger.info("Follow %s", user)
                 try:
                     api.create_friendship(tw_user.id)
                 except tweepy.error.TweepError as err:
@@ -118,6 +117,7 @@ def make_follow_for_current_account(account_screen_name):
                         send_message_to_slack(text)
                         send_message_to_telegram(text)
                         break
+                logger.info("Follow %s", user)
                 user.is_follower = True
                 user.save(update_fields=('is_follower', ))
                 counter += 1
@@ -172,7 +172,7 @@ def make_retweet(api, recent_tweets, tag=''):
     return False
 
 
-def make_unfollow_for_current_account(account_screen_name):
+def make_unfollow_for_current_account(account_screen_name, limit):
     account = AccountOwner.objects.get(is_active=True,
                                        screen_name=account_screen_name)
     if account:
@@ -187,7 +187,7 @@ def make_unfollow_for_current_account(account_screen_name):
         api = tweepy.API(auth, wait_on_rate_limit=True,
                          wait_on_rate_limit_notify=True)
         me = api.me()
-        limit = random.randrange(90, 100)
+        limit = random.randrange(limit, limit+10)
         logger.info("The limit of unfollowing is set to %s", limit)
         today = date.today()
 
@@ -197,9 +197,26 @@ def make_unfollow_for_current_account(account_screen_name):
         count = 0
         for friend in friends_list:
             time.sleep(random.randrange(1, 15, step=1))
+
+            user = TwitterFollower.objects.filter(user_id=friend).exists()
+            if user:
+                user = TwitterFollower.objects.filter(user_id=friend).first()
+                user_for_unfollow = user.screen_name
+            else:
+                user_for_unfollow = api.get_user(friend)
+
+            in_white_list = WhiteListTwitterUser.objects.filter(
+                screen_name=user_for_unfollow).exists()
+            if in_white_list:
+                continue
+
             if friend not in followers_list:
                 try:
                     api.destroy_friendship(friend)
+                    time.sleep(random.randrange(1, 5, step=1))
+                    user = api.get_user(friend)
+                    friendship = api.show_friendship(user.id, user.screen_name,
+                                                     me.id, me.screen_name)[0]
                 except tweepy.error.TweepError as err:
                     if err.api_code == 50:
                         logger.info("User {} not found!".format(friend))
@@ -217,11 +234,7 @@ def make_unfollow_for_current_account(account_screen_name):
                         logger.info("User has been suspended. Error code: 63")
                         continue
 
-                user = api.get_user(friend)
-                friendship = api.show_friendship(user.id, user.screen_name,
-                                                 me.id, me.screen_name)[0]
-
-                if not friendship.followed_by:
+                if friendship and not friendship.followed_by:
                     logger.info("Unfollow {}".format(friend))
                     count += 1
                     try:
@@ -245,28 +258,97 @@ def make_unfollow_for_current_account(account_screen_name):
 
 
 def follow():
-    tw_accounts = AccountOwner.objects.filter(is_active=True)
-    for user in tw_accounts:
-        allowed_actions = TWITTER_ACCOUNT_SETTINGS.get(user.screen_name)
-        if 'follow' in allowed_actions.keys():
-            follow_function = allowed_actions.get('follow')
-            make_follow = load_function(follow_function)
-            try:
-                make_follow(user.screen_name)
-            except tweepy.error.TweepError as err:
-                logger.exception('{}'.format(err.reason))
-                continue
+    for user in TWITTER_ACCOUNT_SETTINGS.keys():
+        allowed_actions = TWITTER_ACCOUNT_SETTINGS.get(user)
+        is_active = AccountOwner.objects.filter(is_active=True,
+                                                screen_name=user).exists()
+        if is_active and 'follow' in allowed_actions.keys():
+            for follow_func in allowed_actions.get('follow'):
+                import ipdb; ipdb.set_trace()
+                make_follow = load_function(follow_func)
+                limit = allowed_actions.get('followers_limit')
+                try:
+                    make_follow(user, limit)
+                except tweepy.error.TweepError as err:
+                    logger.exception('{}'.format(err.reason))
+                    continue
 
 
 def unfollow():
-    tw_accounts = AccountOwner.objects.filter(is_active=True)
-    for user in tw_accounts:
-        allowed_actions = TWITTER_ACCOUNT_SETTINGS.get(user.screen_name)
-        if 'unfollow' in allowed_actions.keys():
-            unfollow_function = allowed_actions.get('unfollow')
-            make_unfollow = load_function(unfollow_function)
-            try:
-                make_unfollow(user.screen_name)
-            except tweepy.error.TweepError as err:
-                logger.exception('{}'.format(err.reason))
-                continue
+    for user in TWITTER_ACCOUNT_SETTINGS.keys():
+        allowed_actions = TWITTER_ACCOUNT_SETTINGS.get(user)
+        is_active = AccountOwner.objects.filter(is_active=True,
+                                                screen_name=user).exists()
+        if is_active and 'unfollow' in allowed_actions.keys():
+            for unfollow_func in allowed_actions.get('unfollow'):
+                make_unfollow = load_function(unfollow_func)
+                limit = allowed_actions.get('followers_limit')
+                try:
+                    make_unfollow(user, limit)
+                except tweepy.error.TweepError as err:
+                    logger.exception('{}'.format(err.reason))
+                    continue
+
+
+def follow_all_own_followers(account_screen_name, limit=None):
+    account = AccountOwner.objects.get(is_active=True,
+                                       screen_name=account_screen_name)
+    if account:
+        logger.info('Start follow own followers for {}'.format(
+            account.screen_name)
+        )
+        consumer_key = account.consumer_key
+        consumer_secret = account.consumer_secret
+        access_token = account.access_token
+        access_token_secret = account.access_token_secret
+
+        auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+        auth.set_access_token(access_token, access_token_secret)
+        api = tweepy.API(auth, wait_on_rate_limit=True,
+                         wait_on_rate_limit_notify=True)
+        me = api.me()
+        limit = random.randrange(20, 40)
+        logger.info("The limit of followers is set to %s", limit)
+        today = date.today()
+
+        followers_list = api.followers_ids()
+        friends_list = api.friends_ids()
+
+        count = 0
+        for follower in followers_list:
+            time.sleep(random.randrange(1, 15, step=1))
+
+            if follower not in friends_list:
+                try:
+                    api.create_friendship(follower)
+                except tweepy.error.TweepError as err:
+                    if err.api_code == 50:
+                        logger.info("User {} not found!".format(follower.id))
+                        continue
+                    elif err.api_code == 89:
+                        text = 'Twitter access token has been expired.' \
+                               'Please, refresh it for {}'.format(
+                                me.screen_name
+                                )
+                        logger.info(text)
+                        send_message_to_slack(text)
+                        send_message_to_telegram(text)
+                        break
+                    elif err.api_code == 63:
+                        logger.info("User has been suspended. Error code: 63")
+                        continue
+                logger.info("Follow %s", follower)
+                count += 1
+            if count == limit:
+                text = "Account: {}. Follow {} own followers." \
+                       " Date: {}".format(account.screen_name, limit, today)
+                logger.info("The limit of %s followings is reached", limit)
+                send_message_to_slack(text)
+                send_message_to_telegram(text)
+                break
+
+        if count == 0:
+            text = 'TwitterBot finished follow own {}\'s followers. You can' \
+                   ' delete related function from' \
+                   ' TWITTER_ACCOUNT_SETTINGS'.format(account_screen_name)
+            send_message_to_slack(text)
