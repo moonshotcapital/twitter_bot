@@ -7,6 +7,7 @@ from datetime import date
 
 from django.conf import settings
 from django.db import IntegrityError
+from requests.exceptions import HTTPError
 from slackclient import SlackClient
 
 from twitterbot.models import (
@@ -268,8 +269,8 @@ def follow():
                 limit = allowed_actions.get('followers_limit')
                 try:
                     make_follow(user, limit)
-                except tweepy.error.TweepError as err:
-                    logger.exception('{}'.format(err.reason))
+                except (tweepy.error.TweepError, HTTPError):
+                    logger.exception('Something gone wrong')
                     continue
 
 
@@ -284,8 +285,8 @@ def unfollow():
                 limit = allowed_actions.get('followers_limit')
                 try:
                     make_unfollow(user, limit)
-                except tweepy.error.TweepError as err:
-                    logger.exception('{}'.format(err.reason))
+                except (tweepy.error.TweepError, HTTPError):
+                    logger.exception('Something gone wrong')
                     continue
 
 
