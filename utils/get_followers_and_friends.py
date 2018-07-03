@@ -1,5 +1,12 @@
+import logging
+
+
+logger = logging.getLogger(__name__)
+
 
 def get_followers(twitter_user):
+    logger.info('Start process of getting followers '
+                'for {}'.format(twitter_user.screen_name))
     followers = []
     followers_count = 0
 
@@ -10,7 +17,7 @@ def get_followers(twitter_user):
 
     followers_for_one_rate_limit_window = 3000
 
-    while followers_count < followers_for_one_rate_limit_window:
+    while followers_count < twitter_user.followers_count:
         tw_followers_list = twitter_user.followers(cursor=next_cursor,
                                                    count=200)
         followers += tw_followers_list[0]
@@ -18,11 +25,14 @@ def get_followers(twitter_user):
         next_cursor = tw_followers_list[1][1]
         if next_cursor == 0:
             break
-
+    logger.info('Finish process of getting followers '
+                'for {}'.format(twitter_user.screen_name))
     return followers
 
 
 def get_friends(twitter_user):
+    logger.info('Start process of getting friends '
+                'for {}'.format(twitter_user.screen_name))
     friends = []
     friends_count = 0
 
@@ -33,7 +43,7 @@ def get_friends(twitter_user):
 
     friends_for_one_rate_limit_window = 3000
 
-    while friends_count < friends_for_one_rate_limit_window:
+    while friends_count < twitter_user.friends_count:
         tw_friends_list = twitter_user.friends(
             cursor=next_cursor,
             count=200
@@ -43,5 +53,6 @@ def get_friends(twitter_user):
         next_cursor = tw_friends_list[1][1]
         if next_cursor == 0:
             break
-
+    logger.info('Finish process of getting friends '
+                'for {}'.format(twitter_user.screen_name))
     return friends

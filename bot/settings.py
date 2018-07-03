@@ -190,7 +190,7 @@ TWITTER_ACCOUNT_SETTINGS = {
     'a_soldatenko': {
         'unfollow': ['utils.twitterbot.make_unfollow_for_current_account'],
         'follow': ['utils.twitterbot.make_follow_for_current_account'],
-        'followers_limit': 50
+        'followers_limit': 10
     },
     'goformoonshot': {
         'unfollow': ['utils.twitterbot.make_unfollow_for_current_account'],
