@@ -200,18 +200,20 @@ def favorite_tweet():
 
 
 def like(api, recent_tweets, tag=''):
+    likes = api.favorites()
+    favorite_tweets_ids = [likes[i].id for i in range(len(likes))]
+
     for tweet in recent_tweets:
         tw_text = tweet.text.lower()
 
         if tag in tw_text and not tweet.in_reply_to_status_id and (
                 tweet.lang == 'en' and not tweet.in_reply_to_user_id):
 
-            try:
+            if tweet.id not in favorite_tweets_ids:
                 api.create_favorite(tweet.id)
-            except tweepy.error.TweepError as err:
-                if err.api_code == 327 or err.api_code == 185:
-                    logger.info('Error code {}'.format(err.api_code))
-                    continue
+            else:
+                continue
+
             return True
     return False
 
