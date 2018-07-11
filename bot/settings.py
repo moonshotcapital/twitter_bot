@@ -164,6 +164,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'twitterbot.tasks.retweet_task',
         'schedule': crontab(hour='10,12,14', minute=0),
     },
+    'favorite_tweet_task': {
+        'task': 'twitterbot.tasks.favorite_tweet_task',
+        'schedule': crontab(hour='11,16,20', minute=0),
+    },
     'unfollow_users_task': {
         'task': 'twitterbot.tasks.unfollow_users_task',
         'schedule': crontab(hour='7,13,19', minute=0),
@@ -197,6 +201,7 @@ TWITTER_ACCOUNT_SETTINGS = {
         'follow': ['utils.twitterbot.make_follow_for_current_account',
                    'utils.twitterbot.follow_all_own_followers'],
         'followers_limit': 50,
-        'retweet': True
+        'retweet': True,
+        'like': True
     },
 }
