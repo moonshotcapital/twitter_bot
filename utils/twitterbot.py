@@ -18,7 +18,7 @@ from twitterbot.models import (
     WhiteListTwitterUser,
     AccountOwner
 )
-from utils.common import load_function
+from utils.common import load_function, connect_to_twitter_api
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -134,27 +134,37 @@ def make_follow_for_current_account(account_screen_name, limit):
 
 
 def retweet_verified_users():
+    today = date.today()
+    for user in TWITTER_ACCOUNT_SETTINGS.keys():
+        allowed_actions = TWITTER_ACCOUNT_SETTINGS.get(user)
+        is_active = AccountOwner.objects.filter(is_active=True,
+                                                screen_name=user).exists()
+        if is_active and allowed_actions.get('retweet'):
+            logger.info('Start retweeting for {}'.format(user))
+            user = AccountOwner.objects.get(is_active=True, screen_name=user)
+            api = connect_to_twitter_api(user)
 
-    auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
-    auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
-    api = tweepy.API(auth, wait_on_rate_limit=True,
-                     wait_on_rate_limit_notify=True)
+            # get random verified user from our DB
+            ids_list = VerifiedUserWithTag.objects.filter(
+                account_owner=user
+            ).values_list('id', flat=True)
+            ver_user = VerifiedUserWithTag.objects.get(
+                id=random.choice(ids_list), account_owner=user)
 
-    # get random verified user from our DB
-    ids_list = VerifiedUserWithTag.objects.all().values_list('id', flat=True)
-    user = VerifiedUserWithTag.objects.get(id=random.choice(ids_list))
+            # get recent 20 tweets for current user
+            recent_tweets = api.user_timeline(ver_user.screen_name)
 
-    # get recent 20 tweets for current user
-    recent_tweets = api.user_timeline(user.screen_name)
+            if ver_user and ver_user.tags:
+                tag = '#{}'.format(random.choice(ver_user.tags))
+            else:
+                tag = ''
 
-    if user and user.tags:
-        tag = '#{}'.format(random.choice(user.tags))
-    else:
-        tag = ''
-
-    result = make_retweet(api, recent_tweets, tag=tag)
-    if not result:
-        make_retweet(api, recent_tweets)
+            result = make_retweet(api, recent_tweets, tag=tag)
+            if not result:
+                make_retweet(api, recent_tweets)
+            msg = 'New retweet for {}. Date: {}'.format(user, today)
+            send_message_to_slack(msg)
+            logger.info('Finish retweeting for {}'.format(user))
 
 
 def make_retweet(api, recent_tweets, tag=''):
@@ -168,6 +178,7 @@ def make_retweet(api, recent_tweets, tag=''):
                 api.retweet(tweet.id)
             except tweepy.error.TweepError as err:
                 if err.api_code == 327 or err.api_code == 185:
+                    logger.info('Error code {}'.format(err.api_code))
                     continue
             return True
     return False
