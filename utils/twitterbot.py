@@ -168,13 +168,12 @@ def retweet_verified_users():
 
 
 def favorite_tweet():
-    today = date.today()
     for user in TWITTER_ACCOUNT_SETTINGS.keys():
         allowed_actions = TWITTER_ACCOUNT_SETTINGS.get(user)
         is_active = AccountOwner.objects.filter(is_active=True,
                                                 screen_name=user).exists()
         if is_active and allowed_actions.get('like'):
-            logger.info('Start favoriting for {}'.format(user))
+            logger.info('Start creating favorite tweet for {}'.format(user))
             user = AccountOwner.objects.get(is_active=True, screen_name=user)
             api = connect_to_twitter_api(user)
 
@@ -196,16 +195,16 @@ def favorite_tweet():
             result = like(api, recent_tweets, tag=tag)
             if not result:
                 like(api, recent_tweets)
-            msg = 'New favorite tweet for {}. Date: {}'.format(user, today)
-            send_message_to_slack(msg)
-            logger.info('Finish favoriting for {}'.format(user))
+
+            logger.info('Finish creating favorite tweet for {}'.format(user))
 
 
 def like(api, recent_tweets, tag=''):
     for tweet in recent_tweets:
         tw_text = tweet.text.lower()
 
-        if tag in tw_text and tweet.lang == 'en':
+        if tag in tw_text and not tweet.in_reply_to_status_id and (
+                tweet.lang == 'en' and not tweet.in_reply_to_user_id):
 
             try:
                 api.create_favorite(tweet.id)
