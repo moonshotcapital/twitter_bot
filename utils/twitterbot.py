@@ -318,7 +318,7 @@ def follow_all_own_followers(account_screen_name, limit=None):
         api = tweepy.API(auth, wait_on_rate_limit=True,
                          wait_on_rate_limit_notify=True)
         me = api.me()
-        limit = random.randrange(20, 40)
+        limit = random.randrange(limit, limit)
         logger.info("The limit of followers is set to %s", limit)
         today = date.today()
 

@@ -166,7 +166,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'unfollow_users_task': {
         'task': 'twitterbot.tasks.unfollow_users_task',
-        'schedule': crontab(hour='7,13,19', minute=0),
+        'schedule': crontab(hour='7,10,13,16,19', minute=0),
     },
 }
 
