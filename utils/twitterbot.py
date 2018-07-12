@@ -109,7 +109,11 @@ def make_follow_for_current_account(account_screen_name, limit):
                     api.create_friendship(tw_user.id)
                     tweets = tw_user.timeline()[:2]  # get 2 tweets for like
                     for tweet in tweets:
-                        api.create_favorite(tweet.id)
+                        if not tweet.in_reply_to_status_id and (
+                                tweet.lang == 'en' and not tweet.in_reply_to_user_id):
+                            api.create_favorite(tweet.id)
+                        else:
+                            continue
 
                 except tweepy.error.TweepError as err:
                     if err.api_code == 161:
