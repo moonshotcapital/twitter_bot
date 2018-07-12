@@ -201,7 +201,7 @@ def favorite_tweet():
 
 def like(api, recent_tweets, tag=''):
     likes = api.favorites()
-    favorite_tweets_ids = [likes[i].id for i in range(len(likes))]
+    favorite_tweets_ids = [liked_tweet.id for liked_tweet in likes]
 
     for tweet in recent_tweets:
         tw_text = tweet.text.lower()
