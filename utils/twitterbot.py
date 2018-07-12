@@ -107,6 +107,10 @@ def make_follow_for_current_account(account_screen_name, limit):
                 time.sleep(random.randrange(1, 15, step=1))
                 try:
                     api.create_friendship(tw_user.id)
+                    tweets = tw_user.timeline()[:2]  # get 2 tweets for like
+                    for tweet in tweets:
+                        api.create_favorite(tweet.id)
+
                 except tweepy.error.TweepError as err:
                     if err.api_code == 161:
                         text = "Unable to follow more people at this time. " \
@@ -118,6 +122,8 @@ def make_follow_for_current_account(account_screen_name, limit):
                         send_message_to_slack(text)
                         send_message_to_telegram(text)
                         break
+                    elif err.api_code == 139:
+                        logger.info('Like tweet which have already favorited!')
                 logger.info("Follow %s", user)
                 user.is_follower = True
                 user.save(update_fields=('is_follower', ))
@@ -318,7 +324,7 @@ def follow_all_own_followers(account_screen_name, limit=None):
         api = tweepy.API(auth, wait_on_rate_limit=True,
                          wait_on_rate_limit_notify=True)
         me = api.me()
-        limit = random.randrange(limit, limit)
+        limit = random.randrange(limit, limit+10)
         logger.info("The limit of followers is set to %s", limit)
         today = date.today()
 
