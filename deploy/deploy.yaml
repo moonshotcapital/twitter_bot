@@ -79,8 +79,8 @@
       name: "{{ item }}"
       state: latest
     with_items:
-      - docker==2.7.0
-      - docker-compose==1.18.0
+      - docker==3.4.1
+      - docker-compose==1.22.0
       - pip==10.0.1
     become: True
   
