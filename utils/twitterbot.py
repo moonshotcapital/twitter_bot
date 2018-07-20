@@ -205,7 +205,7 @@ def make_unfollow_for_current_account(account_screen_name, limit):
         api = tweepy.API(auth, wait_on_rate_limit=True,
                          wait_on_rate_limit_notify=True)
         me = api.me()
-        limit = random.randrange(limit, limit+10)
+        limit = random.randrange(limit-10, limit)
         logger.info("The limit of unfollowing is set to %s", limit)
         today = date.today()
 
@@ -214,7 +214,7 @@ def make_unfollow_for_current_account(account_screen_name, limit):
 
         count = 0
         for friend in friends_list:
-            time.sleep(random.randrange(1, 15, step=1))
+            time.sleep(random.randrange(1, 3, step=1))
 
             user = TwitterFollower.objects.filter(user_id=friend).exists()
             if user:
@@ -231,7 +231,7 @@ def make_unfollow_for_current_account(account_screen_name, limit):
             if friend not in followers_list:
                 try:
                     api.destroy_friendship(friend)
-                    time.sleep(random.randrange(1, 5, step=1))
+                    time.sleep(random.randrange(1, 3, step=1))
                     user = api.get_user(friend)
                     friendship = api.show_friendship(user.id, user.screen_name,
                                                      me.id, me.screen_name)[0]
