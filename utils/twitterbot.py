@@ -205,7 +205,7 @@ def make_unfollow_for_current_account(account_screen_name, limit):
         api = tweepy.API(auth, wait_on_rate_limit=True,
                          wait_on_rate_limit_notify=True)
         me = api.me()
-        limit = random.randrange(100, 150)
+        limit = random.randrange(limit, limit+10)
         logger.info("The limit of unfollowing is set to %s", limit)
         today = date.today()
 
