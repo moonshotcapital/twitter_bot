@@ -30,6 +30,12 @@ You can specify an automation strategy individually for each user.
 * *`'retweet': True`* - bool value, if True - make retweets for current account
 ###### Note
 If you want to follow all the users who follows you - use the function `follow_all_own_followers()` in *`twitterbot/utils/twitterbot.py`*.
+
+## Run bot using Docker
+```
+$ docker-compose -f docker-compose-dev.yml up -d --build
+```
+
 ## Optional features
 **Twitter bot** uses [celery tasks](http://docs.celeryproject.org/en/latest/userguide/tasks.html) for making the operations:
 * follow users
