@@ -63,7 +63,7 @@ def make_follow_for_current_account(account_screen_name, limit):
         access_token_secret = account.access_token_secret
 
         tw_accounts = TargetTwitterAccount.objects.filter(
-            is_follower=False, followers_count__gt=800, account_owner=account)
+            is_follower=False, followers_count__gt=400, account_owner=account)
         today = date.today()
 
         auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
@@ -103,7 +103,7 @@ def make_follow_for_current_account(account_screen_name, limit):
                 else:
                     raise err
 
-            if tw_user and tw_user.followers_count > 1000:
+            if tw_user and tw_user.followers_count > 400:
                 time.sleep(random.randrange(1, 15, step=1))
                 try:
                     api.create_friendship(tw_user.id)
