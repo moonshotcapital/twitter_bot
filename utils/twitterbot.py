@@ -104,7 +104,7 @@ def make_follow_for_current_account(account_screen_name, limit):
                     raise err
 
             if tw_user and tw_user.followers_count > 400:
-                time.sleep(random.randrange(1, 15, step=1))
+                time.sleep(random.randrange(1, 3, step=1))
                 try:
                     api.create_friendship(tw_user.id)
                     tweets = tw_user.timeline()[:2]  # get 2 tweets for like
@@ -130,12 +130,13 @@ def make_follow_for_current_account(account_screen_name, limit):
                 counter += 1
 
             if counter == limit:
-                text = "Account: {}. Number of followers: {}." \
-                       " Date: {}".format(account.screen_name, limit, today)
                 logger.info("The limit of %s followings is reached", limit)
-                send_message_to_slack(text)
-                send_message_to_telegram(text)
                 break
+
+        text = "Account: {}. Number of followers: {}." \
+               " Date: {}".format(account.screen_name, limit, today)
+        send_message_to_slack(text)
+        send_message_to_telegram(text)
         logger.info('Finish follow for {}'.format(account.screen_name))
 
 
