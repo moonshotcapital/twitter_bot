@@ -303,7 +303,7 @@ def unfollow():
                     continue
 
 
-def follow_all_own_followers(account_screen_name, limit=None):
+def follow_all_own_followers(account_screen_name, limit=0):
     account = AccountOwner.objects.get(is_active=True,
                                        screen_name=account_screen_name)
     if account:
