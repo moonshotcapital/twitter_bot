@@ -52,24 +52,27 @@ def send_message_to_telegram(message):
     logger.info('Sent message to telegram: {}'.format(message))
 
 
+def login_to_twitter_api(account: AccountOwner):
+    consumer_key = account.consumer_key
+    consumer_secret = account.consumer_secret
+    access_token = account.access_token
+    access_token_secret = account.access_token_secret
+    auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+    auth.set_access_token(access_token, access_token_secret)
+    api = tweepy.API(auth, wait_on_rate_limit=True,
+                     wait_on_rate_limit_notify=True)
+    return api
+
+
 def make_follow_for_current_account(account_screen_name, limit):
     account = AccountOwner.objects.get(is_active=True,
                                        screen_name=account_screen_name)
     if account:
         logger.info('Start follow for {}'.format(account.screen_name))
-        consumer_key = account.consumer_key
-        consumer_secret = account.consumer_secret
-        access_token = account.access_token
-        access_token_secret = account.access_token_secret
-
+        api = login_to_twitter_api(account)
         tw_accounts = TargetTwitterAccount.objects.filter(
             is_follower=False, followers_count__gt=400, account_owner=account)
         today = date.today()
-
-        auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-        auth.set_access_token(access_token, access_token_secret)
-        api = tweepy.API(auth, wait_on_rate_limit=True,
-                         wait_on_rate_limit_notify=True)
 
         limit = random.randrange(limit, limit+10)
         logger.info("The limit of followers is set to %s", limit)
@@ -196,15 +199,7 @@ def make_unfollow_for_current_account(account_screen_name, limit):
                                        screen_name=account_screen_name)
     if account:
         logger.info('Start unfollow for {}'.format(account.screen_name))
-        consumer_key = account.consumer_key
-        consumer_secret = account.consumer_secret
-        access_token = account.access_token
-        access_token_secret = account.access_token_secret
-
-        auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-        auth.set_access_token(access_token, access_token_secret)
-        api = tweepy.API(auth, wait_on_rate_limit=True,
-                         wait_on_rate_limit_notify=True)
+        api = login_to_twitter_api(account)
         me = api.me()
         limit = random.randrange(limit-10, limit)
         logger.info("The limit of unfollowing is set to %s", limit)
@@ -315,15 +310,7 @@ def follow_all_own_followers(account_screen_name, limit=None):
         logger.info('Start follow own followers for {}'.format(
             account.screen_name)
         )
-        consumer_key = account.consumer_key
-        consumer_secret = account.consumer_secret
-        access_token = account.access_token
-        access_token_secret = account.access_token_secret
-
-        auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-        auth.set_access_token(access_token, access_token_secret)
-        api = tweepy.API(auth, wait_on_rate_limit=True,
-                         wait_on_rate_limit_notify=True)
+        api = login_to_twitter_api(account)
         me = api.me()
         limit = random.randrange(limit, limit+10)
         logger.info("The limit of followers is set to %s", limit)
