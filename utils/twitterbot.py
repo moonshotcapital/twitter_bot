@@ -64,12 +64,18 @@ def login_to_twitter_api(account: AccountOwner):
     return api
 
 
+def get_count_of_followers_and_following(api):
+    data = api.me()
+    return data.followers_count, data.friends_count
+
+
 def make_follow_for_current_account(account_screen_name, limit):
     account = AccountOwner.objects.get(is_active=True,
                                        screen_name=account_screen_name)
     if account:
         logger.info('Start follow for {}'.format(account.screen_name))
         api = login_to_twitter_api(account)
+        before_stat = get_count_of_followers_and_following(api)
         tw_accounts = TargetTwitterAccount.objects.filter(
             is_follower=False, followers_count__gt=400, account_owner=account)
         today = date.today()
@@ -136,8 +142,10 @@ def make_follow_for_current_account(account_screen_name, limit):
                 logger.info("The limit of %s followings is reached", limit)
                 break
 
-        text = "Account: {}. Number of followers: {}." \
-               " Date: {}".format(account.screen_name, limit, today)
+        stats = get_count_of_followers_and_following(api)
+        text = ("Finished following. Account: {}. Number of followers: {}."
+                " We're following {}. Following before task: {}. Date: {}."
+                .format(account.screen_name, *stats, before_stat[1], today))
         send_message_to_slack(text)
         send_message_to_telegram(text)
         logger.info('Finish follow for {}'.format(account.screen_name))
@@ -201,7 +209,8 @@ def make_unfollow_for_current_account(account_screen_name, limit):
         logger.info('Start unfollow for {}'.format(account.screen_name))
         api = login_to_twitter_api(account)
         me = api.me()
-        limit = random.randrange(limit-10, limit)
+        following = me.friends_count
+        limit = random.randrange(max(limit-10, 1), limit)
         logger.info("The limit of unfollowing is set to %s", limit)
         today = date.today()
 
@@ -262,9 +271,10 @@ def make_unfollow_for_current_account(account_screen_name, limit):
 
             if count == limit:
                 break
-
-        text = "Account: {}. Number of unfollowers: {}. Date: {}".format(
-            account.screen_name, count, today)
+        stats = get_count_of_followers_and_following(api)
+        text = ("Finished unfollowing. Account: {}. Number of followers: {}."
+                " We're following {}. Following before task: {}. Date: {}."
+                .format(account.screen_name, *stats, following, today))
         logger.info(text)
         send_message_to_slack(text)
         send_message_to_telegram(text)
