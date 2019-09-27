@@ -199,4 +199,11 @@ TWITTER_ACCOUNT_SETTINGS = {
         'followers_limit': 50,
         'retweet': True
     },
+    'sake_arts': {
+        'unfollow': ['utils.twitterbot.make_unfollow_for_current_account'],
+        'follow': ['utils.twitterbot.make_follow_for_current_account',
+                   'utils.twitterbot.follow_all_own_followers'],
+        'followers_limit': 50,
+        'retweet': True
+    },
 }

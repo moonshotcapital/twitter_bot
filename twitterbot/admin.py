@@ -17,10 +17,15 @@ class TwitterUserAdmin(admin.ModelAdmin):
 
 @admin.register(VerifiedUserWithTag)
 class VerifiedUserWithTagAdmin(admin.ModelAdmin):
-    list_display = ('screen_name', 'tags')
+    list_display = ('screen_name', 'tags', 'account_owner')
 
 
-admin.site.register(TargetTwitterAccount)
+@admin.register(TargetTwitterAccount)
+class TargetTwitterAccountAdmin(admin.ModelAdmin):
+    list_display = ('screen_name', 'followers_count', 'location',
+                    'is_follower', 'account_owner')
+
+
 admin.site.register(BlackList)
 admin.site.register(WhiteListTwitterUser)
 admin.site.register(AccountOwner)
