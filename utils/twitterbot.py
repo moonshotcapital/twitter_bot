@@ -226,7 +226,7 @@ def make_unfollow_for_current_account(account_screen_name, limit):
                 user = TwitterFollower.objects.filter(user_id=friend).first()
                 user_for_unfollow = user.screen_name
             else:
-                user_for_unfollow = api.get_user(friend)
+                user_for_unfollow = api.get_user(friend).screen_name
 
             in_white_list = WhiteListTwitterUser.objects.filter(
                 screen_name=user_for_unfollow).exists()
