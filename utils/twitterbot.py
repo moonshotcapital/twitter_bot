@@ -209,6 +209,7 @@ def make_unfollow_for_current_account(account_screen_name, limit):
         logger.info('Start unfollow for {}'.format(account.screen_name))
         api = login_to_twitter_api(account)
         me = api.me()
+        import ipdb; ipdb.set_trace()
         following = me.friends_count
         limit = random.randrange(max(limit-10, 1), limit)
         logger.info("The limit of unfollowing is set to %s", limit)
@@ -226,7 +227,7 @@ def make_unfollow_for_current_account(account_screen_name, limit):
                 user = TwitterFollower.objects.filter(user_id=friend).first()
                 user_for_unfollow = user.screen_name
             else:
-                user_for_unfollow = api.get_user(friend)
+                user_for_unfollow = api.get_user(friend).screen_name
 
             in_white_list = WhiteListTwitterUser.objects.filter(
                 screen_name=user_for_unfollow).exists()
