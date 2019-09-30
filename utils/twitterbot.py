@@ -52,18 +52,6 @@ def send_message_to_telegram(message, account):
     logger.info('Sent message to telegram: {}'.format(message))
 
 
-def login_to_twitter_api(account: AccountOwner):
-    consumer_key = account.consumer_key
-    consumer_secret = account.consumer_secret
-    access_token = account.access_token
-    access_token_secret = account.access_token_secret
-    auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-    auth.set_access_token(access_token, access_token_secret)
-    api = tweepy.API(auth, wait_on_rate_limit=True,
-                     wait_on_rate_limit_notify=True)
-    return api
-
-
 def get_count_of_followers_and_following(api):
     data = api.me()
     return data.followers_count, data.friends_count
@@ -74,7 +62,7 @@ def make_follow_for_current_account(account_screen_name, limit):
                                        screen_name=account_screen_name)
     if account:
         logger.info('Start follow for {}'.format(account.screen_name))
-        api = login_to_twitter_api(account)
+        api = connect_to_twitter_api(account)
         before_stat = get_count_of_followers_and_following(api)
         tw_accounts = TargetTwitterAccount.objects.filter(
             is_follower=False, followers_count__gt=400, account_owner=account)
@@ -207,7 +195,7 @@ def make_unfollow_for_current_account(account_screen_name, limit):
                                        screen_name=account_screen_name)
     if account:
         logger.info('Start unfollow for {}'.format(account.screen_name))
-        api = login_to_twitter_api(account)
+        api = connect_to_twitter_api(account)
         me = api.me()
         following = me.friends_count
         limit = random.randrange(max(limit-10, 1), limit)
@@ -320,7 +308,7 @@ def follow_all_own_followers(account_screen_name, limit=0):
         logger.info('Start follow own followers for {}'.format(
             account.screen_name)
         )
-        api = login_to_twitter_api(account)
+        api = connect_to_twitter_api(account)
         me = api.me()
         limit = random.randrange(limit, limit+10)
         logger.info("The limit of followers is set to %s", limit)
