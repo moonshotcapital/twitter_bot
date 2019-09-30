@@ -43,11 +43,11 @@ def send_message_to_slack(message):
     logger.info('Sent message to slack: {}'.format(message))
 
 
-def send_message_to_telegram(message):
-    chat_id = settings.TELEGRAM_CHAT_ID
+def send_message_to_telegram(message, account):
     token = settings.TELEGRAM_NOTIFICATIONS_TOKEN
     url = "https://api.telegram.org/bot{}/sendMessage".format(token)
-    r = requests.post(url, data={'chat_id': chat_id, 'text': message})
+    r = requests.post(url, data={'chat_id': account.telegram_chat_id,
+                                 'text': message})
     r.raise_for_status()
     logger.info('Sent message to telegram: {}'.format(message))
 
@@ -104,7 +104,7 @@ def make_follow_for_current_account(account_screen_name, limit):
                            ' refresh it for {}'.format(account.screen_name)
                     logger.info(text)
                     send_message_to_slack(text)
-                    send_message_to_telegram(text)
+                    send_message_to_telegram(text, account)
                     break
                 elif err.api_code == 63:
                     logger.info("User has been suspended. Error code: 63")
@@ -129,7 +129,7 @@ def make_follow_for_current_account(account_screen_name, limit):
                                 )
                         logger.info(text)
                         send_message_to_slack(text)
-                        send_message_to_telegram(text)
+                        send_message_to_telegram(text, account)
                         break
                     elif err.api_code == 139:
                         logger.info('Like tweet which have already favorited!')
@@ -147,7 +147,7 @@ def make_follow_for_current_account(account_screen_name, limit):
                 " We're following {}. Following before task: {}. Date: {}."
                 .format(account.screen_name, *stats, before_stat[1], today))
         send_message_to_slack(text)
-        send_message_to_telegram(text)
+        send_message_to_telegram(text, account)
         logger.info('Finish follow for {}'.format(account.screen_name))
 
 
@@ -251,7 +251,7 @@ def make_unfollow_for_current_account(account_screen_name, limit):
                                 )
                         logger.info(text)
                         send_message_to_slack(text)
-                        send_message_to_telegram(text)
+                        send_message_to_telegram(text, account)
                         break
                     elif err.api_code == 63:
                         logger.info("User has been suspended. Error code: 63")
@@ -277,7 +277,7 @@ def make_unfollow_for_current_account(account_screen_name, limit):
                 .format(account.screen_name, *stats, following, today))
         logger.info(text)
         send_message_to_slack(text)
-        send_message_to_telegram(text)
+        send_message_to_telegram(text, account)
         logger.info('Finish unfollow for {}'.format(account.screen_name))
 
 
@@ -347,7 +347,7 @@ def follow_all_own_followers(account_screen_name, limit=0):
                                 )
                         logger.info(text)
                         send_message_to_slack(text)
-                        send_message_to_telegram(text)
+                        send_message_to_telegram(text, account)
                         break
                     elif err.api_code == 63:
                         logger.info("User has been suspended. Error code: 63")
@@ -359,7 +359,7 @@ def follow_all_own_followers(account_screen_name, limit=0):
                        " Date: {}".format(account.screen_name, limit, today)
                 logger.info("The limit of %s followings is reached", limit)
                 send_message_to_slack(text)
-                send_message_to_telegram(text)
+                send_message_to_telegram(text, account)
                 break
 
         if count == 0:

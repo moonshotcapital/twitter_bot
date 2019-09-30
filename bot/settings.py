@@ -181,7 +181,6 @@ ACCESS_TOKEN_SECRET = os.environ.get('ACCESS_TOKEN_SECRET')
 SLACK_API_TOKEN = os.environ.get('SLACK_API_TOKEN')
 SLACK_CHANNEL = os.environ.get('SLACK_CHANNEL')
 
-TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID')
 TELEGRAM_NOTIFICATIONS_TOKEN = os.environ.get('TELEGRAM_NOTIFICATIONS_TOKEN')
 
 # followers_limit -> this values is used for limit of number of followers and

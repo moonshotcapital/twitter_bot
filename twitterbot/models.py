@@ -10,6 +10,7 @@ class AccountOwner(models.Model):
     access_token_secret = models.CharField(max_length=50, null=True,
                                            blank=True)
     is_active = models.BooleanField(default=False)
+    telegram_chat_id = models.CharField(max_length=10, null=True, blank=True)
 
     def __str__(self):
         return self.screen_name
