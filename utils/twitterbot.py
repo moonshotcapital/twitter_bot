@@ -319,9 +319,9 @@ def follow_all_own_followers(account_screen_name, limit=0):
 
         count = 0
         for follower in followers_list:
-            time.sleep(random.randrange(1, 15, step=1))
 
             if follower not in friends_list:
+                time.sleep(random.randrange(1, 15, step=1))
                 try:
                     api.create_friendship(follower)
                 except tweepy.error.TweepError as err:
