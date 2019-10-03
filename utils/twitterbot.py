@@ -204,9 +204,10 @@ def make_unfollow_for_current_account(account_screen_name, limit):
 
         followers_list = api.followers_ids()
         friends_list = api.friends_ids()
+        not_in_followers = [x for x in friends_list if x not in followers_list]
 
         count = 0
-        for friend in friends_list:
+        for friend in not_in_followers:
             time.sleep(random.randrange(1, 3, step=1))
 
             user = TwitterFollower.objects.filter(user_id=friend).exists()
@@ -221,42 +222,41 @@ def make_unfollow_for_current_account(account_screen_name, limit):
             if in_white_list:
                 continue
 
-            if friend not in followers_list:
+            try:
+                api.destroy_friendship(friend)
+                time.sleep(random.randrange(1, 3, step=1))
+                user = api.get_user(friend)
+                friendship = api.show_friendship(user.id, user.screen_name,
+                                                 me.id, me.screen_name)[0]
+            except tweepy.error.TweepError as err:
+                if err.api_code == 50:
+                    logger.info("User {} not found!".format(friend))
+                    continue
+                elif err.api_code == 89:
+                    text = 'Twitter access token has been expired.' \
+                           'Please, refresh it for {}'.format(
+                            me.screen_name
+                            )
+                    logger.info(text)
+                    send_message_to_slack(text)
+                    send_message_to_telegram(text, account)
+                    break
+                elif err.api_code == 63:
+                    logger.info("User has been suspended. Error code: 63")
+                    continue
+
+            if friendship and not friendship.followed_by:
+                logger.info("Unfollow {}".format(friend))
                 try:
-                    api.destroy_friendship(friend)
-                    time.sleep(random.randrange(1, 3, step=1))
-                    user = api.get_user(friend)
-                    friendship = api.show_friendship(user.id, user.screen_name,
-                                                     me.id, me.screen_name)[0]
-                except tweepy.error.TweepError as err:
-                    if err.api_code == 50:
-                        logger.info("User {} not found!".format(friend))
-                        continue
-                    elif err.api_code == 89:
-                        text = 'Twitter access token has been expired.' \
-                               'Please, refresh it for {}'.format(
-                                me.screen_name
-                                )
-                        logger.info(text)
-                        send_message_to_slack(text)
-                        send_message_to_telegram(text, account)
-                        break
-                    elif err.api_code == 63:
-                        logger.info("User has been suspended. Error code: 63")
-                        continue
+                    BlackList.objects.create(user_id=friend,
+                                             account_owner=account)
+                    TwitterFollower.objects.filter(
+                        user_id=friend, account_owner=account).delete()
+                except IntegrityError:
+                    logger.exception('Integrity Error during unfollowing')
+                    continue
 
-                if friendship and not friendship.followed_by:
-                    logger.info("Unfollow {}".format(friend))
-                    count += 1
-                    try:
-                        BlackList.objects.create(user_id=friend,
-                                                 account_owner=account)
-                        TwitterFollower.objects.filter(
-                            user_id=friend, account_owner=account).delete()
-                    except IntegrityError:
-                        logger.exception('Integrity Error during unfollowing')
-                        continue
-
+            count += 1
             if count == limit:
                 break
         stats = get_count_of_followers_and_following(api)
@@ -316,39 +316,38 @@ def follow_all_own_followers(account_screen_name, limit=0):
 
         followers_list = api.followers_ids()
         friends_list = api.friends_ids()
+        not_in_friends = [x for x in followers_list if x not in friends_list]
 
         count = 0
-        for follower in followers_list:
-
-            if follower not in friends_list:
-                time.sleep(random.randrange(1, 15, step=1))
-                try:
-                    api.create_friendship(follower)
-                except tweepy.error.TweepError as err:
-                    if err.api_code == 50:
-                        logger.info("User {} not found!".format(follower.id))
-                        continue
-                    elif err.api_code == 89:
-                        text = 'Twitter access token has been expired.' \
-                               'Please, refresh it for {}'.format(
-                                me.screen_name
-                                )
-                        logger.info(text)
-                        send_message_to_slack(text)
-                        send_message_to_telegram(text, account)
-                        break
-                    elif err.api_code == 63:
-                        logger.info("User has been suspended. Error code: 63")
-                        continue
-                logger.info("Follow %s", follower)
-                count += 1
+        for follower in not_in_friends:
+            time.sleep(random.randrange(1, 15, step=1))
+            try:
+                api.create_friendship(follower)
+            except tweepy.error.TweepError as err:
+                if err.api_code == 50:
+                    logger.info("User {} not found!".format(follower.id))
+                    continue
+                elif err.api_code == 89:
+                    text = 'Twitter access token has been expired.' \
+                           'Please, refresh it for {}'.format(
+                            me.screen_name
+                            )
+                    logger.info(text)
+                    send_message_to_slack(text)
+                    send_message_to_telegram(text, account)
+                    break
+                elif err.api_code == 63:
+                    logger.info("User has been suspended. Error code: 63")
+                    continue
+            logger.info("Follow %s", follower)
+            count += 1
             if count == limit:
-                text = "Account: {}. Follow {} own followers." \
-                       " Date: {}".format(account.screen_name, limit, today)
                 logger.info("The limit of %s followings is reached", limit)
-                send_message_to_slack(text)
-                send_message_to_telegram(text, account)
                 break
+            text = "Account: {}. Follow {} own followers." \
+                   " Date: {}".format(account.screen_name, count, today)
+            send_message_to_slack(text)
+            send_message_to_telegram(text, account)
 
         if count == 0:
             text = 'TwitterBot finished follow own {}\'s followers. You can' \
