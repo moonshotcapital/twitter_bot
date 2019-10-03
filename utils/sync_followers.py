@@ -1,10 +1,10 @@
 import logging
-
-import tweepy
 from django.conf import settings
 
 from twitterbot.models import BlackList, TwitterFollower, AccountOwner
 from utils.get_followers_and_friends import get_followers, get_friends
+from utils.twitterbot import send_message_to_telegram, send_message_to_slack
+from utils.common import connect_to_twitter_api
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -18,16 +18,7 @@ ACCESS_TOKEN_SECRET = settings.ACCESS_TOKEN_SECRET
 def update_twitter_followers_list():
     tw_accounts = AccountOwner.objects.filter(is_active=True)
     for account in tw_accounts:
-        consumer_key = account.consumer_key
-        consumer_secret = account.consumer_secret
-        access_token = account.access_token
-        access_token_secret = account.access_token_secret
-
-        auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-        auth.set_access_token(access_token, access_token_secret)
-        api = tweepy.API(auth, wait_on_rate_limit=True,
-                         wait_on_rate_limit_notify=True)
-
+        api = connect_to_twitter_api(account)
         current_user = api.me()
         friends_list = get_friends(current_user)
         followers_list = get_followers(current_user)
@@ -48,13 +39,12 @@ def update_db_followers_list_due_to_non_automatic_changes(friends_list,
     ).values_list('user_id', flat=True)
 
     tw_followers = [user.id_str for user in followers_list]
-    for db_follower in db_followers:
-        if db_follower not in tw_followers:
-            TwitterFollower.objects.filter(
-                user_id=db_follower,
-                user_type=TwitterFollower.FOLLOWER,
-                account_owner=acc_owner
-            ).delete()
+    lost_followers = [x for x in db_followers if x not in tw_followers]
+    TwitterFollower.objects.filter(
+        user_id__in=lost_followers,
+        user_type=TwitterFollower.FOLLOWER,
+        account_owner=acc_owner
+    ).delete()
 
     db_friends = TwitterFollower.objects.filter(
         user_type=TwitterFollower.FRIEND,
@@ -62,13 +52,22 @@ def update_db_followers_list_due_to_non_automatic_changes(friends_list,
     ).values_list('user_id', flat=True)
 
     tw_friends = [user.id_str for user in friends_list]
-    for db_friend in db_friends:
-        if db_friend not in tw_friends:
-            TwitterFollower.objects.filter(
-                user_id=db_friend,
-                user_type=TwitterFollower.FRIEND,
-                account_owner=acc_owner
-            ).delete()
+    lost_friends = [x for x in db_friends if x not in tw_friends]
+    TwitterFollower.objects.filter(
+        user_id__in=lost_friends,
+        user_type=TwitterFollower.FRIEND,
+        account_owner=acc_owner
+    ).delete()
+
+    overall_followers_increase = len(followers_list) - len(db_followers)
+
+    text = 'Followers report! Lost: {}. Increase: {}. Overall increase: {}' \
+           ''.format(len(lost_followers),
+                     overall_followers_increase + len(lost_followers),
+                     overall_followers_increase
+                     )
+    send_message_to_telegram(text, acc_owner)
+    send_message_to_slack(text)
 
 
 def update_db_friends_list(friends_list, acc_owner):
