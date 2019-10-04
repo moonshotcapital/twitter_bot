@@ -344,10 +344,10 @@ def follow_all_own_followers(account_screen_name, limit=0):
             if count == limit:
                 logger.info("The limit of %s followings is reached", limit)
                 break
-            text = "Account: {}. Follow {} own followers." \
-                   " Date: {}".format(account.screen_name, count, today)
-            send_message_to_slack(text)
-            send_message_to_telegram(text, account)
+        text = "Account: {}. Follow {} own followers." \
+               " Date: {}".format(account.screen_name, count, today)
+        send_message_to_slack(text)
+        send_message_to_telegram(text, account)
 
         if count == 0:
             text = 'TwitterBot finished follow own {}\'s followers. You can' \
