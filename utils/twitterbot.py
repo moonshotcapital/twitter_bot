@@ -101,7 +101,7 @@ def make_follow_for_current_account(account_screen_name, limit):
                     raise err
 
             if tw_user and tw_user.followers_count > 400:
-                time.sleep(random.randrange(1, 3, step=1))
+                time.sleep(random.randrange(10, 60))
                 try:
                     api.create_friendship(tw_user.id)
                     tweets = tw_user.timeline()[:2]  # get 2 tweets for like
@@ -208,7 +208,7 @@ def make_unfollow_for_current_account(account_screen_name, limit):
 
         count = 0
         for friend in not_in_followers:
-            time.sleep(random.randrange(1, 3, step=1))
+            time.sleep(random.randrange(10, 60))
 
             user = TwitterFollower.objects.filter(user_id=friend).exists()
             if user:
@@ -224,7 +224,7 @@ def make_unfollow_for_current_account(account_screen_name, limit):
 
             try:
                 api.destroy_friendship(friend)
-                time.sleep(random.randrange(1, 3, step=1))
+                time.sleep(random.randrange(10, 60))
                 user = api.get_user(friend)
                 friendship = api.show_friendship(user.id, user.screen_name,
                                                  me.id, me.screen_name)[0]
@@ -320,7 +320,7 @@ def follow_all_own_followers(account_screen_name, limit=0):
 
         count = 0
         for follower in not_in_friends:
-            time.sleep(random.randrange(1, 15, step=1))
+            time.sleep(random.randrange(10, 60))
             try:
                 api.create_friendship(follower)
             except tweepy.error.TweepError as err:
