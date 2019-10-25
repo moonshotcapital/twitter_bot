@@ -6,7 +6,7 @@ from celery.utils.log import get_task_logger
 from twitterbot.models import AccountOwner
 from utils.get_followers_and_friends import get_followers, get_friends
 from utils.common import connect_to_twitter_api, save_twitter_users_to_db
-from utils.twitterbot import follow, retweet_verified_users, unfollow
+from utils.twitterbot import follow, retweet, unfollow
 from utils.sync_followers import update_twitter_followers_list
 
 logger = get_task_logger(__name__)
@@ -28,7 +28,7 @@ def update_followers_list_task():
 @task
 def retweet_task():
     logger.info('Started retweeting!')
-    retweet_verified_users()
+    retweet()
     logger.info('Finished retweeting!')
 
 
