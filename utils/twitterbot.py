@@ -225,8 +225,8 @@ def retweet_verified_users(user):
                 if err.api_code == 327 or err.api_code == 185:
                     logger.info('Error code {}'.format(err.api_code))
                     continue
-            msg = '{} retweeted {} tweet!. Date: {}'.format(
-                user, tweet.user.screen_name, today)
+            msg = 'New retweet! Date: {}\ntwitter.com/{}/status/{}'.format(
+                today.date(), tweet.user.screen_name, tweet.id)
             send_message_to_slack(msg)
             send_message_to_telegram(msg, user)
             return
