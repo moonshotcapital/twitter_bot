@@ -249,7 +249,8 @@ def make_unfollow_for_current_account(account_screen_name, limit):
         not_in_followers = [x for x in friends_list if x not in followers_list]
 
         count = 0
-        for friend in not_in_followers:
+        # unfollow accounts that don't follow us a long time
+        for friend in reversed(not_in_followers):
             time.sleep(random.randrange(10, 60))
 
             user = TwitterFollower.objects.filter(user_id=friend).exists()
