@@ -26,6 +26,10 @@ class TargetTwitterAccountAdmin(admin.ModelAdmin):
                     'is_follower', 'account_owner')
 
 
+@admin.register(WhiteListTwitterUser)
+class WhiteListTwitterUserAdmin(admin.ModelAdmin):
+    list_display = ('screen_name', 'user_id', 'account_owner', 'created')
+
+
 admin.site.register(BlackList)
-admin.site.register(WhiteListTwitterUser)
 admin.site.register(AccountOwner)

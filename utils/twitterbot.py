@@ -246,25 +246,15 @@ def make_unfollow_for_current_account(account_screen_name, limit):
 
         followers_list = api.followers_ids()
         friends_list = api.friends_ids()
-        not_in_followers = [x for x in friends_list if x not in followers_list]
-
+        in_white_list = WhiteListTwitterUser.objects.filter(
+            account_owner=account).values_list('user_id', flat=True)
+        not_in_followers = [acc_id for acc_id in friends_list
+                            if acc_id not in followers_list
+                            and str(acc_id) not in in_white_list]
         count = 0
+
         # unfollow accounts that don't follow us a long time
         for friend in reversed(not_in_followers):
-            time.sleep(random.randrange(10, 60))
-
-            user = TwitterFollower.objects.filter(user_id=friend).exists()
-            if user:
-                user = TwitterFollower.objects.filter(user_id=friend).first()
-                user_for_unfollow = user.screen_name
-            else:
-                user_for_unfollow = api.get_user(friend).screen_name
-
-            in_white_list = WhiteListTwitterUser.objects.filter(
-                screen_name=user_for_unfollow).exists()
-            if in_white_list:
-                continue
-
             try:
                 api.destroy_friendship(friend)
                 time.sleep(random.randrange(10, 60))
