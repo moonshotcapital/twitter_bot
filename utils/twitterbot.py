@@ -264,7 +264,6 @@ def make_unfollow_for_current_account(account_screen_name, limit):
             except tweepy.error.TweepError as err:
                 if err.api_code == 50:
                     logger.info("User {} not found!".format(friend))
-                    continue
                 elif err.api_code == 89:
                     text = 'Twitter access token has been expired.' \
                            'Please, refresh it for {}'.format(
@@ -276,7 +275,7 @@ def make_unfollow_for_current_account(account_screen_name, limit):
                     break
                 elif err.api_code == 63:
                     logger.info("User has been suspended. Error code: 63")
-                    continue
+                continue
 
             if friendship and not friendship.followed_by:
                 logger.info("Unfollow {}".format(friend))
