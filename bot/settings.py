@@ -203,6 +203,7 @@ TWITTER_ACCOUNT_SETTINGS = {
         'follow': ['utils.twitterbot.make_follow_for_current_account',
                    'utils.twitterbot.follow_all_own_followers'],
         'followers_limit': 40,
-        'retweet': ['utils.twitterbot.retweet_verified_users']
+        'retweet': ['utils.twitterbot.retweet_verified_users'],
+        'csv_statistic': True
     },
 }

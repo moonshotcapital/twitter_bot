@@ -1,18 +1,19 @@
 import logging
+import os
+import csv
+import tempfile
+import requests
 from django.conf import settings
 
 from twitterbot.models import BlackList, TwitterFollower, AccountOwner
+from utils.common import connect_to_twitter_api
 from utils.get_followers_and_friends import get_followers, get_friends
 from utils.twitterbot import send_message_to_telegram, send_message_to_slack
-from utils.common import connect_to_twitter_api
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-CONSUMER_KEY = settings.CONSUMER_KEY
-CONSUMER_SECRET = settings.CONSUMER_SECRET
-ACCESS_TOKEN = settings.ACCESS_TOKEN
-ACCESS_TOKEN_SECRET = settings.ACCESS_TOKEN_SECRET
+TWITTER_ACCOUNT_SETTINGS = settings.TWITTER_ACCOUNT_SETTINGS
 
 
 def update_twitter_followers_list():
@@ -29,6 +30,7 @@ def update_twitter_followers_list():
         # add new friends and followers to db after automation marketing
         update_db_friends_list(friends_list, account)
         update_db_followers_list(followers_list, account)
+        send_csv_statistic_to_telegram(followers_list, account)
 
 
 def update_db_followers_list_due_to_non_automatic_changes(friends_list,
@@ -128,3 +130,36 @@ def update_db_followers_list(followers_list, acc_owner):
                                            account_owner=acc_owner).delete()
         else:
             continue
+
+
+def send_csv_statistic_to_telegram(followers_list, acc_owner):
+    allowed_actions = TWITTER_ACCOUNT_SETTINGS.get(acc_owner.screen_name)
+
+    if 'csv_statistic' in allowed_actions:
+        file_path = os.path.join(tempfile.gettempdir(), 'followers.csv')
+        f = open(file_path, 'w')
+        file_writer = csv.writer(f, quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        file_header = ['#', 'twitter name', 'name', 'location', 'description',
+                       'followers count', 'friends count', 'start following']
+        file_writer.writerow(file_header)
+
+        followers = TwitterFollower.objects.filter(
+            account_owner=acc_owner, user_type=TwitterFollower.FOLLOWER
+        ).values('screen_name', 'created')
+        start_follow_list = {
+            x.get('screen_name'): x.get('created').date() for x in followers
+        }
+        for count, follower in enumerate(followers_list, 1):
+            start_follow = start_follow_list.get(follower.screen_name)
+            file_writer.writerow(
+                [count, follower.screen_name, follower.name, follower.location,
+                 follower.description, follower.followers_count,
+                 follower.friends_count, start_follow]
+            )
+        f.close()
+
+        token = settings.TELEGRAM_NOTIFICATIONS_TOKEN
+        url = "https://api.telegram.org/bot{}/sendDocument".format(token)
+        r = requests.post(url, data={'chat_id': acc_owner.telegram_chat_id},
+                          files={'document': open(file_path, 'r')})
+        r.raise_for_status()
