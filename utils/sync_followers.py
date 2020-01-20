@@ -3,6 +3,7 @@ import os
 import csv
 import tempfile
 import requests
+from django.db.models import Count
 from django.conf import settings
 
 from twitterbot.models import TwitterFollower, AccountOwner
@@ -42,15 +43,27 @@ def update_db_lists_non_automatic_changes(accounts_list, acc_owner, user_type):
         user_type=user_type, account_owner=acc_owner
     ).values_list('user_id', flat=True)
 
-    tw_list = [user.id_str for user in accounts_list]
-    lost_accounts = [acc for acc in db_list if acc not in tw_list]
+    # get duplicates from db e.x. if user changed screen_name
+    dup = TwitterFollower.objects.filter(
+        account_owner=acc_owner, user_type=user_type).values_list(
+        'user_id', flat=True).annotate(Count('id')).filter(id__count__gt=1)
+
+    # get actual names of twitter users
+    act = [user.screen_name for user in accounts_list if user.id_str in dup]
+
+    # remove duplicates from the db
     TwitterFollower.objects.filter(
-        user_id__in=lost_accounts,
-        user_type=user_type,
-        account_owner=acc_owner
-    ).delete()
+        user_id__in=[int(x) for x in dup], user_type=user_type
+    ).exclude(screen_name__in=act).delete()
 
     if user_type == TwitterFollower.FOLLOWER:
+        tw_list = [user.id_str for user in accounts_list]
+        lost_accounts = [acc for acc in db_list if acc not in tw_list]
+        TwitterFollower.objects.filter(
+            user_id__in=lost_accounts,
+            user_type=user_type,
+            account_owner=acc_owner
+        ).delete()
 
         overall_followers_increase = len(accounts_list) - len(db_list)
 
