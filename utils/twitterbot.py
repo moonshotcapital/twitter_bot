@@ -70,11 +70,12 @@ def make_follow_for_current_account(account_screen_name, limit):
             try:
                 tw_user = api.get_user(user.user_id)
             except tweepy.error.TweepError as err:
-                if err.api_code == 50:
-                    logger.info("User {} not found!".format(user.name))
+                if err.api_code == 50 or err.api_code == 63:
+                    logger.info("User {} not found or suspended!".format(
+                        user.name))
                     try:
                         BlackList.objects.create(user_id=user.user_id,
-                                                 reason="User not found!",
+                                                 reason="Not found/Suspended",
                                                  account_owner=account)
                         TargetTwitterAccount.objects.filter(
                             user_id=user.user_id, account_owner=account
@@ -89,9 +90,6 @@ def make_follow_for_current_account(account_screen_name, limit):
                     send_message_to_slack(text)
                     send_message_to_telegram(text, account)
                     break
-                elif err.api_code == 63:
-                    logger.info("User has been suspended. Error code: 63")
-                    continue
                 else:
                     raise err
 
@@ -218,6 +216,8 @@ def retweet_verified_users(user):
     ]
 
     for tweet in max_retweets:
+        logger.info('Try to retweet tweet {} of {}'.format(
+            tweet.id, tweet.user.screen_name))
         if tweet.user.screen_name not in last_five_days_tweets:
             try:
                 api.retweet(tweet.id)
