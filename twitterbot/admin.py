@@ -2,6 +2,7 @@ from django.contrib import admin
 from .models import (
     AccountOwner,
     BlackList,
+    RunTasksTimetable,
     TwitterFollower,
     TargetTwitterAccount,
     VerifiedUserWithTag,
@@ -29,6 +30,11 @@ class TargetTwitterAccountAdmin(admin.ModelAdmin):
 @admin.register(WhiteListTwitterUser)
 class WhiteListTwitterUserAdmin(admin.ModelAdmin):
     list_display = ('screen_name', 'user_id', 'account_owner', 'created')
+
+
+@admin.register(RunTasksTimetable)
+class RunTasksTimetableAdmin(admin.ModelAdmin):
+    list_display = ('name', 'execution_time', 'executed', 'failed', 'created')
 
 
 admin.site.register(BlackList)

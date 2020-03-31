@@ -109,3 +109,18 @@ class WhiteListTwitterUser(models.Model):
 
     def __str__(self):
         return self.screen_name
+
+
+class RunTasksTimetable(models.Model):
+    name = models.CharField(max_length=100)
+    execution_time = models.DateTimeField()
+    executed = models.BooleanField(default=False)
+    failed = models.BooleanField(default=False)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'run_tasks'
+
+    def __str__(self):
+        return self.name

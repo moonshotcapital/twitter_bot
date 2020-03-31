@@ -63,7 +63,7 @@ def make_follow_for_current_account(account_screen_name, limit):
             is_follower=False, followers_count__gt=400, account_owner=account)
         today = date.today()
 
-        limit = random.randrange(limit, limit+10)
+        limit = random.randrange(limit-10, limit)
         logger.info("The limit of followers is set to %s", limit)
         counter = 0
         for user in tw_accounts:
@@ -97,7 +97,8 @@ def make_follow_for_current_account(account_screen_name, limit):
                 time.sleep(random.randrange(10, 60))
                 try:
                     api.create_friendship(tw_user.id)
-                    tweets = tw_user.timeline()[:2]  # get 2 tweets for like
+                    likes_count = random.randrange(1, 4)
+                    tweets = tw_user.timeline()[:likes_count]  # get 1-3 tweets
                     for tweet in tweets:
                         api.create_favorite(tweet.id)
 
@@ -240,7 +241,7 @@ def make_unfollow_for_current_account(account_screen_name, limit):
         api = connect_to_twitter_api(account)
         me = api.me()
         following = me.friends_count
-        limit = random.randrange(max(limit-10, 1), limit)
+        limit = random.randrange(limit-10, limit)
         logger.info("The limit of unfollowing is set to %s", limit)
         today = date.today()
 

@@ -152,22 +152,18 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
 CELERY_BEAT_SCHEDULE = {
-    'twitter_follower_bot_task': {
-        'task': 'twitterbot.tasks.follow_people',
-        'schedule': crontab(hour='7,13,19', minute=30),
-    },
     'update_followers_list_task': {
         'task': 'twitterbot.tasks.update_followers_list_task',
-        'schedule': crontab(hour=21, minute=30),
+        'schedule': crontab(hour=22, minute=30),
     },
-    'retweet_task': {
-        'task': 'twitterbot.tasks.retweet_task',
-        'schedule': crontab(hour='10,12,15', minute=0),
+    'create_timetable': {
+        'task': 'twitterbot.tasks.create_timetable',
+        'schedule': crontab(hour=7, minute=0),
     },
-    'unfollow_users_task': {
-        'task': 'twitterbot.tasks.unfollow_users_task',
-        'schedule': crontab(hour='7,13,19', minute=0),
-    },
+    'run_tasks': {
+            'task': 'twitterbot.tasks.run_tasks',
+            'schedule': crontab(minute='*/2'),
+    }
 }
 
 
@@ -195,13 +191,13 @@ TWITTER_ACCOUNT_SETTINGS = {
         'unfollow': ['utils.twitterbot.make_unfollow_for_current_account'],
         'follow': ['utils.twitterbot.make_follow_for_current_account',
                    'utils.twitterbot.follow_all_own_followers'],
-        'followers_limit': 40,
+        'followers_limit': 25,
         'retweet': ['utils.twitterbot.retweet_verified_users_with_tag']
     },
     'sake_arts': {
         'unfollow': ['utils.twitterbot.make_unfollow_for_current_account'],
         'follow': ['utils.twitterbot.make_follow_for_current_account'],
-        'followers_limit': 40,
+        'followers_limit': 25,
         'retweet': ['utils.twitterbot.retweet_verified_users'],
         'csv_statistic': True
     },

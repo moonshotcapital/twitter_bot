@@ -2,20 +2,15 @@ import tweepy
 
 from celery import task
 from celery.utils.log import get_task_logger
-
-from twitterbot.models import AccountOwner
+from datetime import datetime, timedelta
+from twitterbot.models import AccountOwner, RunTasksTimetable
+import random
 from utils.get_followers_and_friends import get_followers, get_friends
-from utils.common import connect_to_twitter_api, save_twitter_users_to_db
-from utils.twitterbot import follow, retweet, unfollow
+from utils.common import (connect_to_twitter_api, save_twitter_users_to_db,
+                          load_function)
 from utils.sync_followers import update_twitter_followers_list
 
 logger = get_task_logger(__name__)
-
-@task
-def follow_people():
-    logger.info('Started following people!')
-    follow()
-    logger.info('Finished following people!')
 
 
 @task
@@ -26,17 +21,49 @@ def update_followers_list_task():
 
 
 @task
-def retweet_task():
-    logger.info('Started retweeting!')
-    retweet()
-    logger.info('Finished retweeting!')
-
+def create_timetable():
+    logger.info('Started creating tasks timetable')
+    start = datetime.now()
+    # Scheduler task executes at 7 a.m. everyday
+    # And all the modules will execute after this task in time 'time_execute'
+    # Create time list from 7 a.m. to 22 p.m.
+    hours_range = list(range(0, 16))
+    random.shuffle(hours_range)
+    tasks = {'follow': random.randrange(4, 6),
+             'unfollow': random.randrange(3, 5),
+             'retweet': 3}
+    for task_name in tasks:
+        for x in range(tasks[task_name]):
+            hours_execute = hours_range.pop()
+            time_execute = start + timedelta(hours=hours_execute,
+                                             minutes=random.randrange(60))
+            RunTasksTimetable.objects.create(name=task_name,
+                                             execution_time=time_execute)
+    logger.info('New timetable created for {}'.format(start.date()))
 
 @task
-def unfollow_users_task():
-    logger.info('Started unfollowing users!')
-    unfollow()
-    logger.info('Finished unfollowing users!')
+def run_tasks():
+    logger.info('Check tasks to execute')
+    # Scheduler task executes every 2 minutes
+    last_check = datetime.now() - timedelta(minutes=2)
+    action_list = RunTasksTimetable.objects.filter(
+        execution_time__lt=datetime.now(),
+        execution_time__gt=last_check, executed=False)
+    for action in action_list:
+        path = 'utils.twitterbot.' + action.name
+        func = load_function(path)
+        try:
+            logger.info('Try execute {} task'.format(action.name))
+            func()
+        except:
+            logger.info('Some errors detected. Check logs for more info.')
+            action.failed = True
+            action.save(update_fields=('failed',))
+            continue
+        finally:
+            action.executed = True
+            action.save(update_fields=('executed',))
+    logger.info('Finished checking tasks to execute')
 
 
 @task
