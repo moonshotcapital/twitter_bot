@@ -2,7 +2,8 @@ import tweepy
 
 from celery import task
 from celery.utils.log import get_task_logger
-from datetime import datetime, timedelta
+from datetime import timedelta
+from django.utils import timezone
 from twitterbot.models import AccountOwner, RunTasksTimetable
 import random
 from utils.get_followers_and_friends import get_followers, get_friends
@@ -23,7 +24,7 @@ def update_followers_list_task():
 @task
 def create_timetable():
     logger.info('Started creating tasks timetable')
-    start = datetime.now()
+    start = timezone.now()
     # Scheduler task executes at 7 a.m. everyday
     # And all the modules will execute after this task in time 'time_execute'
     # Create time list from 7 a.m. to 22 p.m.
@@ -45,9 +46,9 @@ def create_timetable():
 def run_tasks():
     logger.info('Check tasks to execute')
     # Scheduler task executes every 2 minutes
-    last_check = datetime.now() - timedelta(minutes=2)
+    last_check = timezone.now() - timedelta(minutes=2)
     action_list = RunTasksTimetable.objects.filter(
-        execution_time__lt=datetime.now(),
+        execution_time__lt=timezone.now(),
         execution_time__gt=last_check, executed=False)
     for action in action_list:
         path = 'utils.twitterbot.' + action.name
