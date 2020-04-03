@@ -162,7 +162,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'run_tasks': {
             'task': 'twitterbot.tasks.run_tasks',
-            'schedule': crontab(minute='*/2'),
+            'schedule': crontab(minute='*/2', hour='7-22'),
     }
 }
 

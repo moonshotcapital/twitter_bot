@@ -1,4 +1,5 @@
 import tweepy
+import time
 
 from celery import task
 from celery.utils.log import get_task_logger
@@ -24,11 +25,12 @@ def update_followers_list_task():
 @task
 def create_timetable():
     logger.info('Started creating tasks timetable')
+    time.sleep(random.randrange(10, 30))
     start = timezone.now()
     # Scheduler task executes at 7 a.m. everyday
     # And all the modules will execute after this task in time 'time_execute'
     # Create time list from 7 a.m. to 22 p.m.
-    hours_range = list(range(0, 16))
+    hours_range = list(range(0, 15))
     random.shuffle(hours_range)
     tasks = {'follow': random.randrange(4, 6),
              'unfollow': random.randrange(3, 5),
