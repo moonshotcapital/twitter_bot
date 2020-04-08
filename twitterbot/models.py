@@ -11,6 +11,19 @@ class AccountOwner(models.Model):
                                            blank=True)
     is_active = models.BooleanField(default=False)
     telegram_chat_id = models.CharField(max_length=10, null=True, blank=True)
+    followers_limit = models.PositiveIntegerField(default=25)
+
+    # send daily csv statistic about followers increasing
+    csv_statistic = models.BooleanField(default=False)
+
+    # follow accounts that follow this account (without using bot)
+    follow_all_followers = models.BooleanField(default=False)
+
+    # follow only target accounts that have 400+ followers
+    target_account_followers_count = models.PositiveIntegerField(default=400)
+
+    # path of the retweet function
+    retweet_func = models.CharField(max_length=100, null=True, blank=True)
 
     def __str__(self):
         return self.screen_name

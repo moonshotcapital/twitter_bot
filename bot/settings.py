@@ -178,27 +178,3 @@ SLACK_API_TOKEN = os.environ.get('SLACK_API_TOKEN')
 SLACK_CHANNEL = os.environ.get('SLACK_CHANNEL')
 
 TELEGRAM_NOTIFICATIONS_TOKEN = os.environ.get('TELEGRAM_NOTIFICATIONS_TOKEN')
-
-# followers_limit -> this values is used for limit of number of followers and
-# unfollowers. random.randrange(limit, limit+10)
-TWITTER_ACCOUNT_SETTINGS = {
-    'a_soldatenko': {
-        'unfollow': ['utils.twitterbot.make_unfollow_for_current_account'],
-        'follow': ['utils.twitterbot.make_follow_for_current_account'],
-        'followers_limit': 10
-    },
-    'goformoonshot': {
-        'unfollow': ['utils.twitterbot.make_unfollow_for_current_account'],
-        'follow': ['utils.twitterbot.make_follow_for_current_account',
-                   'utils.twitterbot.follow_all_own_followers'],
-        'followers_limit': 25,
-        'retweet': ['utils.twitterbot.retweet_verified_users_with_tag']
-    },
-    'sake_arts': {
-        'unfollow': ['utils.twitterbot.make_unfollow_for_current_account'],
-        'follow': ['utils.twitterbot.make_follow_for_current_account'],
-        'followers_limit': 25,
-        'retweet': ['utils.twitterbot.retweet_verified_users'],
-        'csv_statistic': True
-    },
-}
