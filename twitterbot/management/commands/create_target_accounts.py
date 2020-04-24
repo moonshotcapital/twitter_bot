@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = '''Loads followers and friends of accounts that current user follows 
+    help = '''Loads followers and friends of accounts that current user follows
               and saves them to DB (TargetTwitterAccount table)'''
 
     def add_arguments(self, parser):

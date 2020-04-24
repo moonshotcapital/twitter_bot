@@ -1,0 +1,32 @@
+
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - 'feature/*'
+  push:
+    branches: 
+      - 'feature/*'
+      - 'master'
+
+jobs:
+
+  flake:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: cclauss/GitHub-Action-for-Flake8@master
+        with:
+          args: flake8 --exclude=.js,.sh,.github,settings.py,scripts,deploy,migrations --statistics --ignore E722,W503 .
+
+  deploy:
+    runs-on: ubuntu-18.04
+    needs: flake
+#    if: github.ref == 'ref/heads/master'
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/ansible
+        env:
+          VAULT_PASS: wkWEVwMDN9tYX9WU
+

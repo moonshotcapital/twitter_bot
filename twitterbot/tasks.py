@@ -44,6 +44,7 @@ def create_timetable():
                                              execution_time=time_execute)
     logger.info('New timetable created for {}'.format(start.date()))
 
+
 @task
 def run_tasks():
     logger.info('Check tasks to execute')
@@ -98,7 +99,6 @@ def get_followers_and_friends_task(options):
 
             try:
                 save_twitter_users_to_db(friends, acc_owner)
-                logger.info('Successfully loaded friends of {}'
-                                       .format(user))
+                logger.info('Successfully loaded friends of {}'.format(user))
             except tweepy.error.TweepError as err:
                 raise err

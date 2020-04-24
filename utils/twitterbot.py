@@ -103,9 +103,8 @@ def make_follow_for_current_account(account):
                 if err.api_code == 161:
                     text = "Unable to follow more people at this time. " \
                            "Account {} must have a sufficient balance of" \
-                           " friends and subscribers".format(
-                                account.screen_name
-                            )
+                           " friends and subscribers"\
+                        .format(account.screen_name)
                     logger.info(text)
                     send_message_to_slack(text)
                     send_message_to_telegram(text, account)
@@ -337,9 +336,7 @@ def follow_all_own_followers(account):
                 continue
             elif err.api_code == 89:
                 text = 'Twitter access token has been expired.' \
-                       'Please, refresh it for {}'.format(
-                        me.screen_name
-                        )
+                       'Please, refresh it for {}'.format(me.screen_name)
                 logger.info(text)
                 send_message_to_slack(text)
                 send_message_to_telegram(text, account)
