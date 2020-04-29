@@ -49,7 +49,7 @@ CI/CD immplemented using `Github Actions`. There are setup two jobs: flake and d
 
 | Job | Description |
 |-------|-----------|
-| flake | Will be trigged on every push to `feature/*` and `master` branches. On pull request from `feature/*` branches and set on `production` tag |
+| flake | Will be trigged on every push to branches or `master`. On pull-request from any branch and `production` tag |
 | deploy | Will be triggered on `production` tag. |
 
 ### How to set/update `production` tag
@@ -66,6 +66,3 @@ git tag -d production # Delete local tag
 git push origin :production # Delete remote tag
 git tag -a production [hash-commit] # Set tag to commit
 ```
-
-
-
