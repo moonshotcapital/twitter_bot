@@ -43,3 +43,29 @@ $ docker-compose -f docker-compose-dev.yml up -d --build
 * retweet by a tag
 
 However, you can also do this stuff with [django-admin commands](https://docs.djangoproject.com/en/2.1/howto/custom-management-commands/) in *`/twitterbot/management/commands`*.
+
+## CI
+CI/CD immplemented using `Github Actions`. There are setup two jobs: flake and deploy.
+
+| Job | Description |
+|-------|-----------|
+| flake | Will be trigged on every push to `feature/*` and `master` branches. On pull request from `feature/*` branches and set on `production` tag |
+| deploy | Will be triggered on `production` tag. |
+
+### How to set/update `production` tag
+
+If tag has not been set:
+```
+git tag production
+```
+
+If tag `production` has been already set in local and remote repo:
+
+```
+git tag -d production # Delete local tag
+git push origin :production # Delete remote tag
+git tag -a production [hash-commit] # Set tag to commit
+```
+
+
+
