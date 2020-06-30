@@ -95,9 +95,21 @@ def make_follow_for_current_account(account):
             try:
                 api.create_friendship(tw_user.id)
                 likes_count = random.randrange(1, 4)
-                tweets = tw_user.timeline()[:likes_count]  # get 1-3 tweets
-                for tweet in tweets:
-                    api.create_favorite(tweet.id)
+                likes = 0
+                tweets = tw_user.timeline()[:10]  # get 10 latest tweets
+                for t in tweets:
+                    if t.favorite_count >= 10 and not t.in_reply_to_status_id:
+                        api.create_favorite(t.id)
+                        likes += 1
+                    else:
+                        try:
+                            if t.retweeted_status.favorite_count >= 10:
+                                api.create_favorite(t.id)
+                                likes += 1
+                        except AttributeError:
+                            continue
+                    if likes == likes_count:
+                        break
 
             except tweepy.error.TweepError as err:
                 if err.api_code == 161:
