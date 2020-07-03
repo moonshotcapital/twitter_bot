@@ -36,11 +36,13 @@ def send_message_to_slack(message):
     logger.info('Sent message to slack: {}'.format(message))
 
 
-def send_message_to_telegram(message, account):
+def send_message_to_telegram(message, account, disable_preview=True):
     token = settings.TELEGRAM_NOTIFICATIONS_TOKEN
     url = "https://api.telegram.org/bot{}/sendMessage".format(token)
-    r = requests.post(url, data={'chat_id': account.telegram_chat_id,
-                                 'text': message})
+    r = requests.post(url, data={
+        'chat_id': account.telegram_chat_id, 'text': message,
+        'disable_web_page_preview': disable_preview, 'parse_mode': 'Markdown'
+    })
     r.raise_for_status()
     logger.info('Sent message to telegram: {}'.format(message))
 
@@ -235,7 +237,7 @@ def retweet_verified_users(user):
             msg = 'New retweet! Date: {}\ntwitter.com/{}/status/{}'.format(
                 today.date(), tweet.user.screen_name, tweet.id)
             send_message_to_slack(msg)
-            send_message_to_telegram(msg, user)
+            send_message_to_telegram(msg, user, False)
             return
 
 

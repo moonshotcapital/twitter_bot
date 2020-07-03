@@ -3,11 +3,11 @@ import os
 import csv
 import tempfile
 import requests
-from django.db.models import Count
+from datetime import date
 from django.conf import settings
 
 from twitterbot.models import TwitterFollower, AccountOwner
-from utils.common import connect_to_twitter_api
+from utils.common import connect_to_twitter_api, replace_characters
 from utils.get_followers_and_friends import get_followers, get_friends
 from utils.twitterbot import send_message_to_telegram, send_message_to_slack
 
@@ -23,15 +23,15 @@ def update_twitter_followers_list():
         friends_list = get_friends(current_user)
         followers_list = get_followers(current_user)
 
+        # add new friends and followers to db after automation marketing
+        update_db_lists(friends_list, account, TwitterFollower.FRIEND)
+        update_db_lists(followers_list, account, TwitterFollower.FOLLOWER)
+
         # sync db if someone unsubscribed from us or etc.
         update_db_lists_non_automatic_changes(friends_list, account,
                                               TwitterFollower.FRIEND)
         update_db_lists_non_automatic_changes(followers_list, account,
                                               TwitterFollower.FOLLOWER)
-
-        # add new friends and followers to db after automation marketing
-        update_db_lists(friends_list, account, TwitterFollower.FRIEND)
-        update_db_lists(followers_list, account, TwitterFollower.FOLLOWER)
 
         if account.csv_statistic:
             send_csv_statistic_to_telegram(followers_list, account)
@@ -42,46 +42,47 @@ def update_db_lists_non_automatic_changes(accounts_list, acc_owner, user_type):
         user_type=user_type, account_owner=acc_owner
     ).values_list('user_id', flat=True)
 
-    # get duplicates from db e.x. if user changed screen_name
-    dup = TwitterFollower.objects.filter(
-        account_owner=acc_owner, user_type=user_type).values_list(
-        'user_id', flat=True).annotate(Count('id')).filter(id__count__gt=1)
-
-    # get actual names of twitter users
-    act = [user.screen_name for user in accounts_list if user.id_str in dup]
-
-    # remove duplicates from the db
+    tw_list = [acc.id_str for acc in accounts_list]
+    lost_accounts = [f for f in db_list if f not in tw_list]
     TwitterFollower.objects.filter(
-        user_id__in=[int(x) for x in dup], user_type=user_type
-    ).exclude(screen_name__in=act).delete()
+        user_id__in=lost_accounts,
+        user_type=user_type,
+        account_owner=acc_owner
+    ).delete()
 
     if user_type == TwitterFollower.FOLLOWER:
-        tw_list = [user.id_str for user in accounts_list]
-        lost_accounts = [acc for acc in db_list if acc not in tw_list]
-        TwitterFollower.objects.filter(
-            user_id__in=lost_accounts,
-            user_type=user_type,
-            account_owner=acc_owner
-        ).delete()
+        new_followers = [f for f in accounts_list if f.id_str not in db_list]
+        titles = '[{}]({})\nLocation: {}\nFollowers: {}, Friends: {}\n' \
+                 '\U0000270F: {}\n'
 
-        overall_followers_increase = len(accounts_list) - len(db_list)
+        new_followers_info = [
+            titles.format(
+                u.screen_name, 'twitter.com/{}'.format(u.screen_name),
+                u.location, u.followers_count, u.friends_count,
+                replace_characters(u.description, '\n*_`')
+            ) for u in new_followers
+            ]
 
-        text = 'Followers report! Lost: {}. Increase: {}. Overall increase: ' \
-               '{}'.format(len(lost_accounts),
-                           overall_followers_increase + len(lost_accounts),
-                           overall_followers_increase
-                           )
+        text = ('Followers report! \U00002705{}  \U0000274C{}  \U00002B06{}'
+                '\nDate: {}\n\n').format(
+            len(new_followers), len(lost_accounts),
+            len(new_followers) - len(lost_accounts), date.today()
+        )
+        text += '\n'.join(new_followers_info)
+
+        # avoid telegram markdown errors
         send_message_to_telegram(text, acc_owner)
         send_message_to_slack(text)
 
 
 def update_db_lists(accounts_list, acc_owner, user_type):
-    db_list_screen_names = TwitterFollower.objects.filter(
+    db_list = TwitterFollower.objects.filter(
         user_type=user_type, account_owner=acc_owner
-    ).values_list('screen_name', flat=True)
-    accounts_list_to_add = [fr for fr in accounts_list
-                            if fr.screen_name not in db_list_screen_names]
+    ).values('user_id', 'screen_name')
 
+    db_user_ids = [user['user_id'] for user in db_list]
+    accounts_list_to_add = [fr for fr in accounts_list
+                            if fr.id_str not in db_user_ids]
     for account in accounts_list_to_add:
         account_info = {
             'user_id': account.id,
@@ -91,8 +92,16 @@ def update_db_lists(accounts_list, acc_owner, user_type):
             'user_type': user_type,
             'location': account.location
         }
-        TwitterFollower.objects.create(**account_info,
-                                       account_owner=acc_owner)
+        TwitterFollower.objects.create(account_owner=acc_owner, **account_info)
+
+    # check if user change the screen name
+    db_user_names = [user['screen_name'] for user in db_list]
+    accounts_list_to_update = [fr for fr in accounts_list
+                               if fr.screen_name not in db_user_names
+                               and fr not in accounts_list_to_add]
+    for account in accounts_list_to_update:
+        TwitterFollower.objects.filter(user_id=account.id).update(
+            screen_name=account.screen_name)
 
 
 def send_csv_statistic_to_telegram(followers_list, acc_owner):

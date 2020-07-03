@@ -21,6 +21,12 @@ def load_function(function_path):
     return getattr(module, func_str)
 
 
+def replace_characters(string, characters):
+    for character in characters:
+        string = string.replace(character, " ")
+    return string
+
+
 def connect_to_twitter_api(account_owner):
     consumer_key = account_owner.consumer_key
     consumer_secret = account_owner.consumer_secret
