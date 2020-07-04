@@ -36,12 +36,12 @@ def send_message_to_slack(message):
     logger.info('Sent message to slack: {}'.format(message))
 
 
-def send_message_to_telegram(message, account, disable_preview=True):
+def send_message_to_telegram(message, account, disable_preview=True, mode=''):
     token = settings.TELEGRAM_NOTIFICATIONS_TOKEN
     url = "https://api.telegram.org/bot{}/sendMessage".format(token)
     r = requests.post(url, data={
         'chat_id': account.telegram_chat_id, 'text': message,
-        'disable_web_page_preview': disable_preview, 'parse_mode': 'Markdown'
+        'disable_web_page_preview': disable_preview, 'parse_mode': mode
     })
     r.raise_for_status()
     logger.info('Sent message to telegram: {}'.format(message))
