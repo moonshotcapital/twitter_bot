@@ -5,9 +5,9 @@ from celery import task
 from celery.utils.log import get_task_logger
 from datetime import timedelta
 from django.utils import timezone
-from twitterbot.models import AccountOwner, RunTasksTimetable
+from twitterbot.models import AccountOwner, RunTasksTimetable, TwitterFollower
 import random
-from utils.get_followers_and_friends import get_followers, get_friends
+from utils.get_followers_and_friends import get_accounts
 from utils.common import (connect_to_twitter_api, save_twitter_users_to_db,
                           load_function)
 from utils.sync_followers import update_twitter_followers_list
@@ -84,7 +84,7 @@ def get_followers_and_friends_task(options):
     for user in options['username']:
         logger.info('Loading followers of {}'.format(user))
         twitter_user = api.get_user(user)
-        followers = get_followers(twitter_user)
+        followers = get_accounts(twitter_user, TwitterFollower.FOLLOWER)
 
         try:
             save_twitter_users_to_db(followers, acc_owner)
@@ -94,7 +94,7 @@ def get_followers_and_friends_task(options):
 
         if options['friends']:
             logger.info('Loading friends of {}'.format(user))
-            friends = get_friends(twitter_user)
+            friends = get_accounts(twitter_user, TwitterFollower.FRIEND)
 
             try:
                 save_twitter_users_to_db(friends, acc_owner)

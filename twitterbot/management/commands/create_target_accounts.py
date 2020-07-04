@@ -1,8 +1,8 @@
 from django.core.management.base import BaseCommand
 import logging
 from utils.common import save_twitter_users_to_db, connect_to_twitter_api
-from utils.get_followers_and_friends import get_followers, get_friends
-from twitterbot.models import AccountOwner
+from utils.get_followers_and_friends import get_accounts
+from twitterbot.models import AccountOwner, TwitterFollower
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -22,10 +22,11 @@ class Command(BaseCommand):
             acc_owner = AccountOwner.objects.get(
                 is_active=True, screen_name=account_owner)
             api = connect_to_twitter_api(acc_owner)
-            friends = get_friends(api.me())
+            friends = get_accounts(api.me(), TwitterFollower.FRIEND)
             for friend in friends:
-                target_accounts = get_friends(friend)
-                target_accounts += get_followers(friend)
+                target_accounts = get_accounts(friend, TwitterFollower.FRIEND)
+                target_accounts += get_accounts(
+                    friend, TwitterFollower.FOLLOWER)
                 save_twitter_users_to_db(target_accounts, acc_owner)
         except:
             self.stdout.write('Account owner not found')

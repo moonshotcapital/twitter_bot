@@ -2,9 +2,9 @@ import csv
 import logging
 from django.core.management.base import BaseCommand
 
-from twitterbot.models import AccountOwner
+from twitterbot.models import AccountOwner, TwitterFollower
 from utils.common import connect_to_twitter_api
-from utils.get_followers_and_friends import get_followers
+from utils.get_followers_and_friends import get_accounts
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ class Command(BaseCommand):
         account = AccountOwner.objects.filter(is_active=True).first()
         api = connect_to_twitter_api(account)
         tw_user = api.get_user(tw_user)
-        followers = get_followers(tw_user)
+        followers = get_accounts(tw_user, TwitterFollower.FOLLOWER)
         folowers_with_a = [['@' + i.screen_name] for i in followers]
 
         file_name = "{}_followers.csv".format(tw_user.screen_name)

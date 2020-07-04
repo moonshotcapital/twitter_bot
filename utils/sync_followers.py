@@ -8,7 +8,7 @@ from django.conf import settings
 
 from twitterbot.models import TwitterFollower, AccountOwner
 from utils.common import connect_to_twitter_api, replace_characters
-from utils.get_followers_and_friends import get_followers, get_friends
+from utils.get_followers_and_friends import get_accounts
 from utils.twitterbot import send_message_to_telegram, send_message_to_slack
 
 logging.basicConfig(level=logging.INFO)
@@ -20,30 +20,32 @@ def update_twitter_followers_list():
     for account in tw_accounts:
         api = connect_to_twitter_api(account)
         current_user = api.me()
-        friends_list = get_friends(current_user)
-        followers_list = get_followers(current_user)
 
-        # add new friends and followers to db after automation marketing
-        update_db_lists(friends_list, account, TwitterFollower.FRIEND)
-        update_db_lists(followers_list, account, TwitterFollower.FOLLOWER)
+        for user_type in TwitterFollower.USER_TYPE_CHOICES:
+            user_type = user_type[0]
 
-        # sync db if someone unsubscribed from us or etc.
-        update_db_lists_non_automatic_changes(friends_list, account,
-                                              TwitterFollower.FRIEND)
-        update_db_lists_non_automatic_changes(followers_list, account,
-                                              TwitterFollower.FOLLOWER)
+            accounts_list = get_accounts(current_user, user_type)
+            db_list = TwitterFollower.objects.filter(
+                user_type=user_type, account_owner=account
+            ).values('user_id', 'screen_name')
 
-        if account.csv_statistic:
-            send_csv_statistic_to_telegram(followers_list, account)
+            # add new friends and followers to db after automation marketing
+            update_db_lists(accounts_list, account, user_type, db_list)
+
+            # sync db if someone unsubscribed from us or etc.
+            update_db_lists_non_automatic_changes(
+                accounts_list, account, user_type, db_list)
+
+            if account.csv_statistic and user_type == TwitterFollower.FOLLOWER:
+                send_csv_statistic_to_telegram(accounts_list, account)
 
 
-def update_db_lists_non_automatic_changes(accounts_list, acc_owner, user_type):
-    db_list = TwitterFollower.objects.filter(
-        user_type=user_type, account_owner=acc_owner
-    ).values_list('user_id', flat=True)
+def update_db_lists_non_automatic_changes(accounts_list, acc_owner, user_type,
+                                          db_list):
+    db_users = [user['user_id'] for user in db_list]
 
     tw_list = [acc.id_str for acc in accounts_list]
-    lost_accounts = [f for f in db_list if f not in tw_list]
+    lost_accounts = [acc for acc in db_users if acc not in tw_list]
     TwitterFollower.objects.filter(
         user_id__in=lost_accounts,
         user_type=user_type,
@@ -51,7 +53,7 @@ def update_db_lists_non_automatic_changes(accounts_list, acc_owner, user_type):
     ).delete()
 
     if user_type == TwitterFollower.FOLLOWER:
-        new_followers = [f for f in accounts_list if f.id_str not in db_list]
+        new_followers = [f for f in accounts_list if f.id_str not in db_users]
         titles = '[{}]({})\nLocation: {}\nFollowers: {}, Friends: {}\n' \
                  '\U0000270F: {}\n'
 
@@ -71,14 +73,11 @@ def update_db_lists_non_automatic_changes(accounts_list, acc_owner, user_type):
         text += '\n'.join(new_followers_info)
 
         # avoid telegram markdown errors
-        send_message_to_telegram(text, acc_owner)
+        send_message_to_telegram(text, acc_owner, mode='Markdown')
         send_message_to_slack(text)
 
 
-def update_db_lists(accounts_list, acc_owner, user_type):
-    db_list = TwitterFollower.objects.filter(
-        user_type=user_type, account_owner=acc_owner
-    ).values('user_id', 'screen_name')
+def update_db_lists(accounts_list, acc_owner, user_type, db_list):
 
     db_user_ids = [user['user_id'] for user in db_list]
     accounts_list_to_add = [fr for fr in accounts_list
