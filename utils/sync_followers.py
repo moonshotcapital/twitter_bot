@@ -34,14 +34,14 @@ def update_twitter_followers_list():
 
             # sync db if someone unsubscribed from us or etc.
             update_db_lists_non_automatic_changes(
-                accounts_list, account, user_type, db_list)
+                accounts_list, account, user_type, db_list, current_user)
 
             if account.csv_statistic and user_type == TwitterFollower.FOLLOWER:
                 send_csv_statistic_to_telegram(accounts_list, account)
 
 
-def update_db_lists_non_automatic_changes(accounts_list, acc_owner, user_type,
-                                          db_list):
+def update_db_lists_non_automatic_changes(
+        accounts_list, acc_owner, user_type, db_list, tw_user):
     db_users = [user['user_id'] for user in db_list]
 
     tw_list = [acc.id_str for acc in accounts_list]
@@ -54,6 +54,8 @@ def update_db_lists_non_automatic_changes(accounts_list, acc_owner, user_type,
 
     if user_type == TwitterFollower.FOLLOWER:
         new_followers = [f for f in accounts_list if f.id_str not in db_users]
+        new_followers = sorted(new_followers, key=lambda f: f.followers_count,
+                               reverse=True)
         titles = '[{}]({})\nLocation: {}\nFollowers: {}, Friends: {}\n' \
                  '\U0000270F: {}\n'
 
@@ -64,11 +66,11 @@ def update_db_lists_non_automatic_changes(accounts_list, acc_owner, user_type,
                 replace_characters(u.description, '\n*_`')
             ) for u in new_followers
             ]
-
+        stats = tw_user.followers_count, tw_user.friends_count
         text = ('Followers report! \U00002705{}  \U0000274C{}  \U00002B06{}'
-                '\nDate: {}\n\n').format(
+                '\nDate: {}\nFollowers: {}, Following: {}\n\n').format(
             len(new_followers), len(lost_accounts),
-            len(new_followers) - len(lost_accounts), date.today()
+            len(new_followers) - len(lost_accounts), date.today(), *stats
         )
         text += '\n'.join(new_followers_info)
 
