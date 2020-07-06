@@ -7,7 +7,12 @@ from datetime import date
 from django.conf import settings
 
 from twitterbot.models import TwitterFollower, AccountOwner
-from utils.common import connect_to_twitter_api, replace_characters
+from utils.common import (
+    connect_to_twitter_api,
+    get_poll_updates,
+    replace_characters,
+    send_poll_to_telegram
+)
 from utils.get_followers_and_friends import get_accounts
 from utils.twitterbot import send_message_to_telegram, send_message_to_slack
 
@@ -37,7 +42,8 @@ def update_twitter_followers_list():
                 accounts_list, account, user_type, db_list, current_user)
 
             if account.csv_statistic and user_type == TwitterFollower.FOLLOWER:
-                send_csv_statistic_to_telegram(accounts_list, account)
+                send_csv_statistic_to_telegram(accounts_list, account,
+                                               'followers')
 
 
 def update_db_lists_non_automatic_changes(
@@ -67,8 +73,8 @@ def update_db_lists_non_automatic_changes(
             ) for u in new_followers
             ]
         stats = tw_user.followers_count, tw_user.friends_count
-        text = ('Followers report! \U00002705{}  \U0000274C{}  \U00002B06{}'
-                '\nDate: {}\nFollowers: {}, Following: {}\n\n').format(
+        text = ('Report!  \U00002705{}  \U0000274C{}  \U00002B06{}'
+                '\nDate: {}\nFollowers: {}, Friends: {}\n\n').format(
             len(new_followers), len(lost_accounts),
             len(new_followers) - len(lost_accounts), date.today(), *stats
         )
@@ -77,6 +83,10 @@ def update_db_lists_non_automatic_changes(
         # avoid telegram markdown errors
         send_message_to_telegram(text, acc_owner, mode='Markdown')
         send_message_to_slack(text)
+
+        # send poll to add followers to favourites
+        acc_names = [acc.screen_name for acc in new_followers]
+        send_poll_to_telegram(acc_owner, acc_names)
 
 
 def update_db_lists(accounts_list, acc_owner, user_type, db_list):
@@ -101,13 +111,15 @@ def update_db_lists(accounts_list, acc_owner, user_type, db_list):
                                if fr.screen_name not in db_user_names
                                and fr not in accounts_list_to_add]
     for account in accounts_list_to_update:
-        TwitterFollower.objects.filter(user_id=account.id).update(
-            screen_name=account.screen_name)
+        TwitterFollower.objects.filter(
+            user_id=account.id, user_type=user_type, account_owner=acc_owner
+        ).update(screen_name=account.screen_name)
 
 
-def send_csv_statistic_to_telegram(followers_list, acc_owner):
+def send_csv_statistic_to_telegram(followers_list, acc_owner, filename):
 
-    file_path = os.path.join(tempfile.gettempdir(), 'followers.csv')
+    filename += '.csv'
+    file_path = os.path.join(tempfile.gettempdir(), filename)
     with open(file_path, 'w') as f:
         f_writer = csv.writer(f, quotechar='"', quoting=csv.QUOTE_MINIMAL)
         file_header = [
@@ -137,3 +149,28 @@ def send_csv_statistic_to_telegram(followers_list, acc_owner):
     r = requests.post(url, data={'chat_id': acc_owner.telegram_chat_id},
                       files={'document': open(file_path, 'r')})
     r.raise_for_status()
+
+
+def update_favourites_list():
+    tw_accounts = AccountOwner.objects.filter(is_active=True)
+
+    for account in tw_accounts:
+        favourites = []
+        updates = get_poll_updates(account).json()['result']
+        for upd in updates:
+            try:
+                options = upd['poll']['options']
+                for opt in options:
+                    if opt['voter_count'] > 0:
+                        favourites.append(opt['text'])
+            except KeyError:
+                continue
+        favourites = set(favourites)
+
+        # send csv statistic
+        api = connect_to_twitter_api(account)
+        current_user = api.me()
+        followers_list = get_accounts(current_user, TwitterFollower.FOLLOWER)
+        followers_list = [f for f in followers_list
+                          if f.screen_name in favourites]
+        send_csv_statistic_to_telegram(followers_list, account, 'favourites')

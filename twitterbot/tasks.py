@@ -10,7 +10,10 @@ import random
 from utils.get_followers_and_friends import get_accounts
 from utils.common import (connect_to_twitter_api, save_twitter_users_to_db,
                           load_function)
-from utils.sync_followers import update_twitter_followers_list
+from utils.sync_followers import (
+    update_twitter_followers_list,
+    update_favourites_list
+)
 
 logger = get_task_logger(__name__)
 
@@ -20,6 +23,13 @@ def update_followers_list_task():
     logger.info('Started updating followers list!')
     update_twitter_followers_list()
     logger.info('Finished updating followers list!')
+
+
+@task
+def update_favourites_list_task():
+    logger.info('Started updating favourites list!')
+    update_favourites_list()
+    logger.info('Finished updating favourites list!')
 
 
 @task
@@ -43,6 +53,7 @@ def create_timetable():
             RunTasksTimetable.objects.create(name=task_name,
                                              execution_time=time_execute)
     logger.info('New timetable created for {}'.format(start.date()))
+
 
 @task
 def run_tasks():

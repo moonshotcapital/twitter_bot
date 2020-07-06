@@ -1,7 +1,9 @@
 import importlib
 import logging
+import requests
 import tweepy
 
+from django.conf import settings
 from twitterbot.models import TargetTwitterAccount, BlackList
 
 logger = logging.getLogger(__name__)
@@ -25,6 +27,31 @@ def replace_characters(string, characters):
     for character in characters:
         string = string.replace(character, " ")
     return string
+
+
+def send_poll_to_telegram(account, options):
+    token = settings.TELEGRAM_NOTIFICATIONS_TOKEN
+    url = "https://api.telegram.org/bot{}/sendPoll".format(token)
+    option_counts = 0
+    max_option_counts = 10 if len(options) % 10 != 1 else 9
+    while option_counts < len(options):
+        r = requests.post(url, json={
+            'chat_id': account.telegram_chat_id, 'is_anonymous': False,
+            'question': 'Add to favourites:', 'allows_multiple_answers': True,
+            'options': options[option_counts:option_counts + max_option_counts]
+        })
+        r.raise_for_status()
+        option_counts += max_option_counts
+    logger.info('Sent poll to telegram')
+
+
+def get_poll_updates(account):
+    token = settings.TELEGRAM_NOTIFICATIONS_TOKEN
+    url = "https://api.telegram.org/bot{}/getUpdates".format(token)
+    r = requests.get(url, data={'chat_id': account.telegram_chat_id})
+    r.raise_for_status()
+    logger.info('Received polls updates')
+    return r
 
 
 def connect_to_twitter_api(account_owner):
