@@ -85,7 +85,8 @@ def update_db_lists_non_automatic_changes(
         send_message_to_slack(text)
 
         # send poll to add followers to favourites
-        acc_names = [acc.screen_name for acc in new_followers]
+        acc_names = [', '.join([acc.screen_name, str(acc.followers_count)])
+                     for acc in new_followers]
         send_poll_to_telegram(acc_owner, acc_names)
 
 
@@ -162,7 +163,8 @@ def update_favourites_list():
                 options = upd['poll']['options']
                 for opt in options:
                     if opt['voter_count'] > 0:
-                        favourites.append(opt['text'])
+                        acc_name = opt['text'].split(',')[0]
+                        favourites.append(acc_name)
             except KeyError:
                 continue
         favourites = set(favourites)
