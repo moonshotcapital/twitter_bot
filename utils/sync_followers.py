@@ -2,10 +2,12 @@ import logging
 import os
 import csv
 import tempfile
+import tweepy
 import requests
 from datetime import date
 from django.conf import settings
 
+from requests.exceptions import HTTPError
 from twitterbot.models import TwitterFollower, AccountOwner
 from utils.common import (
     connect_to_twitter_api,
@@ -23,27 +25,34 @@ logger = logging.getLogger(__name__)
 def update_twitter_followers_list():
     tw_accounts = AccountOwner.objects.filter(is_active=True)
     for account in tw_accounts:
-        api = connect_to_twitter_api(account)
-        current_user = api.me()
+        try:
+            api = connect_to_twitter_api(account)
+            current_user = api.me()
 
-        for user_type in TwitterFollower.USER_TYPE_CHOICES:
-            user_type = user_type[0]
+            for user_type in TwitterFollower.USER_TYPE_CHOICES:
+                user_type = user_type[0]
 
-            accounts_list = get_accounts(current_user, user_type)
-            db_list = TwitterFollower.objects.filter(
-                user_type=user_type, account_owner=account
-            ).values('user_id', 'screen_name')
+                accounts_list = get_accounts(current_user, user_type)
+                db_list = TwitterFollower.objects.filter(
+                    user_type=user_type, account_owner=account
+                ).values('user_id', 'screen_name')
 
-            # add new friends and followers to db after automation marketing
-            update_db_lists(accounts_list, account, user_type, db_list)
+                # add new friends and followers to db after automation
+                # marketing
+                update_db_lists(accounts_list, account, user_type, db_list)
 
-            # sync db if someone unsubscribed from us or etc.
-            update_db_lists_non_automatic_changes(
-                accounts_list, account, user_type, db_list, current_user)
+                # sync db if someone unsubscribed from us or etc.
+                update_db_lists_non_automatic_changes(
+                    accounts_list, account, user_type, db_list, current_user)
 
-            if account.csv_statistic and user_type == TwitterFollower.FOLLOWER:
-                send_csv_statistic_to_telegram(accounts_list, account,
-                                               'followers')
+                if account.csv_statistic and (
+                    user_type == TwitterFollower.FOLLOWER
+                ):
+                    send_csv_statistic_to_telegram(accounts_list, account,
+                                                   'followers')
+        except (tweepy.error.TweepError, HTTPError):
+            logger.exception('Something gone wrong')
+            continue
 
 
 def update_db_lists_non_automatic_changes(
@@ -73,8 +82,9 @@ def update_db_lists_non_automatic_changes(
             ) for u in new_followers
             ]
         stats = tw_user.followers_count, tw_user.friends_count
-        text = ('Report!  \U00002705{}  \U0000274C{}  \U00002B06{}'
-                '\nDate: {}\nFollowers: {}, Friends: {}\n\n').format(
+        text = ('New Twitter Followers Report!\n'
+                '\U00002705{}  \U0000274C{}  \U00002B06{}\n'
+                'Date: {}\nFollowers: {}, Friends: {}\n\n').format(
             len(new_followers), len(lost_accounts),
             len(new_followers) - len(lost_accounts), date.today(), *stats
         )
@@ -156,23 +166,29 @@ def update_favourites_list():
     tw_accounts = AccountOwner.objects.filter(is_active=True)
 
     for account in tw_accounts:
-        favourites = []
-        updates = get_poll_updates(account).json()['result']
-        for upd in updates:
-            try:
-                options = upd['poll']['options']
-                for opt in options:
-                    if opt['voter_count'] > 0:
-                        acc_name = opt['text'].split(',')[0]
-                        favourites.append(acc_name)
-            except KeyError:
-                continue
-        favourites = set(favourites)
+        try:
+            favourites = []
+            updates = get_poll_updates(account).json()['result']
+            for upd in updates:
+                try:
+                    options = upd['poll']['options']
+                    for opt in options:
+                        if opt['voter_count'] > 0:
+                            acc_name = opt['text'].split(',')[0]
+                            favourites.append(acc_name)
+                except KeyError:
+                    continue
+            favourites = set(favourites)
 
-        # send csv statistic
-        api = connect_to_twitter_api(account)
-        current_user = api.me()
-        followers_list = get_accounts(current_user, TwitterFollower.FOLLOWER)
-        followers_list = [f for f in followers_list
-                          if f.screen_name in favourites]
-        send_csv_statistic_to_telegram(followers_list, account, 'favourites')
+            # send csv statistic
+            api = connect_to_twitter_api(account)
+            current_user = api.me()
+            followers_list = get_accounts(current_user,
+                                          TwitterFollower.FOLLOWER)
+            followers_list = [f for f in followers_list
+                              if f.screen_name in favourites]
+            send_csv_statistic_to_telegram(followers_list, account,
+                                           'favourites')
+        except (tweepy.error.TweepError, HTTPError):
+            logger.exception('Something gone wrong')
+            continue
