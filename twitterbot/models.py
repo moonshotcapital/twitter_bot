@@ -47,6 +47,7 @@ class TwitterFollower(models.Model):
     updated = models.DateTimeField(auto_now=True)
     account_owner = models.ForeignKey(AccountOwner, on_delete=models.CASCADE,
                                       null=True)
+    is_favourite = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'twitter_followers'

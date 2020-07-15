@@ -179,15 +179,22 @@ def update_favourites_list():
                 except KeyError:
                     continue
             favourites = set(favourites)
+            TwitterFollower.objects.filter(
+                screen_name__in=favourites, account_owner=account
+            ).update(is_favourite=True)
 
             # send csv statistic
             api = connect_to_twitter_api(account)
             current_user = api.me()
             followers_list = get_accounts(current_user,
                                           TwitterFollower.FOLLOWER)
-            followers_list = [f for f in followers_list
-                              if f.screen_name in favourites]
-            send_csv_statistic_to_telegram(followers_list, account,
+            db_favourites = TwitterFollower.objects.filter(
+                is_favourite=True, user_type=TwitterFollower.FOLLOWER,
+                account_owner=account
+            ).values_list('user_id', flat=True)
+            favourites_list = [f for f in followers_list
+                               if f.id_str in db_favourites]
+            send_csv_statistic_to_telegram(favourites_list, account,
                                            'favourites')
         except (tweepy.error.TweepError, HTTPError):
             logger.exception('Something gone wrong')
