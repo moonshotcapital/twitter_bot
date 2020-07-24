@@ -50,6 +50,7 @@ def update_twitter_followers_list():
                 ):
                     send_csv_statistic_to_telegram(accounts_list, account,
                                                    'followers')
+                    update_favourites_list(accounts_list, account)
         except (tweepy.error.TweepError, HTTPError):
             logger.exception('Something gone wrong')
             continue
@@ -162,40 +163,40 @@ def send_csv_statistic_to_telegram(followers_list, acc_owner, filename):
     r.raise_for_status()
 
 
-def update_favourites_list():
-    tw_accounts = AccountOwner.objects.filter(is_active=True)
+def update_favourites_list(followers_list, account):
+    logger.info('Started updating favourites list!')
 
-    for account in tw_accounts:
+    favourites = []
+    updates = get_poll_updates(account).json()['result']
+    for upd in updates:
         try:
-            favourites = []
-            updates = get_poll_updates(account).json()['result']
-            for upd in updates:
-                try:
-                    options = upd['poll']['options']
-                    for opt in options:
-                        if opt['voter_count'] > 0:
-                            acc_name = opt['text'].split(',')[0]
-                            favourites.append(acc_name)
-                except KeyError:
-                    continue
-            favourites = set(favourites)
-            TwitterFollower.objects.filter(
-                screen_name__in=favourites, account_owner=account
-            ).update(is_favourite=True)
-
-            # send csv statistic
-            api = connect_to_twitter_api(account)
-            current_user = api.me()
-            followers_list = get_accounts(current_user,
-                                          TwitterFollower.FOLLOWER)
-            db_favourites = TwitterFollower.objects.filter(
-                is_favourite=True, user_type=TwitterFollower.FOLLOWER,
-                account_owner=account
-            ).values_list('user_id', flat=True)
-            favourites_list = [f for f in followers_list
-                               if f.id_str in db_favourites]
-            send_csv_statistic_to_telegram(favourites_list, account,
-                                           'favourites')
-        except (tweepy.error.TweepError, HTTPError):
-            logger.exception('Something gone wrong')
+            options = upd['poll']['options']
+            for opt in options:
+                if opt['voter_count'] > 0:
+                    acc_name = opt['text'].split(',')[0]
+                    favourites.append(acc_name)
+        except KeyError:
             continue
+    favourites = set(favourites)
+    TwitterFollower.objects.filter(
+        screen_name__in=favourites, account_owner=account
+    ).update(is_favourite=True)
+
+    # send csv statistic
+    db_favourites = TwitterFollower.objects.filter(
+        is_favourite=True, user_type=TwitterFollower.FOLLOWER,
+        account_owner=account
+    ).values_list('user_id', flat=True)
+
+    favourites_list = [f for f in followers_list if f.id_str in db_favourites]
+    favourites_list_print = [
+        '[{}]({}), {}'.format(
+            u.screen_name, 'twitter.com/{}'.format(u.screen_name),
+            u.followers_count) for u in favourites_list
+    ]
+
+    text = 'Favourites list!\n\n' + '\n'.join(favourites_list_print)
+    send_message_to_telegram(text, account, mode='Markdown')
+    send_csv_statistic_to_telegram(favourites_list, account,
+                                   'favourites')
+    logger.info('Finished updating favourites list!')
