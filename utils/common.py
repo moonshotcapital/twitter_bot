@@ -4,9 +4,11 @@ import requests
 import tweepy
 
 from django.conf import settings
+from slackclient import SlackClient
 from twitterbot.models import TargetTwitterAccount, BlackList
 
 logger = logging.getLogger(__name__)
+MAX_LENGTH_TG_MESSAGE = 4096
 
 
 def load_function(function_path):
@@ -27,6 +29,40 @@ def replace_characters(string, characters):
     for character in characters:
         string = string.replace(character, " ")
     return string
+
+
+def send_message_to_slack(message):
+    sc = SlackClient(settings.SLACK_API_TOKEN)
+    channel = settings.SLACK_CHANNEL
+    sc.api_call(
+        "chat.postMessage",
+        channel=channel,
+        text=message,
+        username='@twitter-notifier'
+    )
+    logger.info('Sent message to slack: {}'.format(message))
+
+
+def send_message_to_telegram(text, account, disable_preview=True, mode=''):
+    token = settings.TELEGRAM_NOTIFICATIONS_TOKEN
+    url = "https://api.telegram.org/bot{}/sendMessage".format(token)
+    while len(text) > 0:
+        if len(text) < MAX_LENGTH_TG_MESSAGE:
+            r = requests.post(url, data={
+                'chat_id': account.telegram_chat_id, 'text': text,
+                'disable_web_page_preview': disable_preview, 'parse_mode': mode
+            })
+            r.raise_for_status()
+            break
+        message = text[:MAX_LENGTH_TG_MESSAGE]
+        n_index = message.rfind('\n')
+        r = requests.post(url, data={
+            'chat_id': account.telegram_chat_id, 'text': message[:n_index],
+            'disable_web_page_preview': disable_preview, 'parse_mode': mode
+        })
+        r.raise_for_status()
+        text = text[n_index:]
+    logger.info('Sent messages to telegram')
 
 
 def send_poll_to_telegram(account, options):

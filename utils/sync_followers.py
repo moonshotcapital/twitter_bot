@@ -13,10 +13,11 @@ from utils.common import (
     connect_to_twitter_api,
     get_poll_updates,
     replace_characters,
-    send_poll_to_telegram
+    send_poll_to_telegram,
+    send_message_to_telegram,
+    send_message_to_slack
 )
 from utils.get_followers_and_friends import get_accounts
-from utils.twitterbot import send_message_to_telegram, send_message_to_slack
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

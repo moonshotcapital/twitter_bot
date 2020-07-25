@@ -1,14 +1,11 @@
 import logging
 import tweepy
 import random
-import requests
 import time
 from datetime import date, datetime, timedelta
 
-from django.conf import settings
 from django.db import IntegrityError
 from requests.exceptions import HTTPError
-from slackclient import SlackClient
 
 from twitterbot.models import (
     BlackList,
@@ -18,33 +15,13 @@ from twitterbot.models import (
     WhiteListTwitterUser,
     AccountOwner
 )
-from utils.common import load_function, connect_to_twitter_api
+from utils.common import (
+    load_function, connect_to_twitter_api,
+    send_message_to_slack, send_message_to_telegram
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-def send_message_to_slack(message):
-    sc = SlackClient(settings.SLACK_API_TOKEN)
-    channel = settings.SLACK_CHANNEL
-    sc.api_call(
-        "chat.postMessage",
-        channel=channel,
-        text=message,
-        username='@twitter-notifier'
-    )
-    logger.info('Sent message to slack: {}'.format(message))
-
-
-def send_message_to_telegram(message, account, disable_preview=True, mode=''):
-    token = settings.TELEGRAM_NOTIFICATIONS_TOKEN
-    url = "https://api.telegram.org/bot{}/sendMessage".format(token)
-    r = requests.post(url, data={
-        'chat_id': account.telegram_chat_id, 'text': message,
-        'disable_web_page_preview': disable_preview, 'parse_mode': mode
-    })
-    r.raise_for_status()
-    logger.info('Sent message to telegram: {}'.format(message))
 
 
 def get_count_of_followers_and_following(api):
