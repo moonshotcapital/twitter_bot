@@ -30,10 +30,12 @@ def update_twitter_followers_list():
             api = connect_to_twitter_api(account)
             current_user = api.me()
 
+            all_users_list = []
             for user_type in TwitterFollower.USER_TYPE_CHOICES:
                 user_type = user_type[0]
 
                 accounts_list = get_accounts(current_user, user_type)
+                all_users_list.extend(accounts_list)
                 db_list = TwitterFollower.objects.filter(
                     user_type=user_type, account_owner=account
                 ).values('user_id', 'screen_name')
@@ -51,7 +53,7 @@ def update_twitter_followers_list():
                 ):
                     send_csv_statistic_to_telegram(accounts_list, account,
                                                    'followers')
-                    update_favourites_list(accounts_list, account)
+                    update_favourites_list(set(all_users_list), account)
         except (tweepy.error.TweepError, HTTPError):
             logger.exception('Something gone wrong')
             continue
@@ -164,7 +166,7 @@ def send_csv_statistic_to_telegram(followers_list, acc_owner, filename):
     r.raise_for_status()
 
 
-def update_favourites_list(followers_list, account):
+def update_favourites_list(users_list, account):
     logger.info('Started updating favourites list!')
 
     favourites = []
@@ -189,7 +191,7 @@ def update_favourites_list(followers_list, account):
         account_owner=account
     ).values_list('user_id', flat=True)
 
-    favourites_list = [f for f in followers_list if f.id_str in db_favourites]
+    favourites_list = [f for f in users_list if f.id_str in db_favourites]
     favourites_list_print = [
         '[{}]({}), {}'.format(
             u.screen_name, 'twitter.com/{}'.format(u.screen_name),
@@ -198,6 +200,5 @@ def update_favourites_list(followers_list, account):
 
     text = 'Favourites list!\n\n' + '\n'.join(favourites_list_print)
     send_message_to_telegram(text, account, mode='Markdown')
-    send_csv_statistic_to_telegram(favourites_list, account,
-                                   'favourites')
+    send_csv_statistic_to_telegram(favourites_list, account, 'favourites')
     logger.info('Finished updating favourites list!')
