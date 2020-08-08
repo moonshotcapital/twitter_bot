@@ -18,6 +18,7 @@ from utils.common import (
     send_message_to_slack
 )
 from utils.get_followers_and_friends import get_accounts
+from itertools import groupby
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -53,7 +54,10 @@ def update_twitter_followers_list():
                 ):
                     send_csv_statistic_to_telegram(accounts_list, account,
                                                    'followers')
-                    update_favourites_list(set(all_users_list), account)
+                    users_list = [next(obj) for i, obj in groupby(
+                        sorted(all_users_list, key=lambda x: x.id_str),
+                        lambda x: x.id_str)]
+                    update_favourites_list(users_list, account)
         except (tweepy.error.TweepError, HTTPError):
             logger.exception('Something gone wrong')
             continue
@@ -187,8 +191,7 @@ def update_favourites_list(users_list, account):
 
     # send csv statistic
     db_favourites = TwitterFollower.objects.filter(
-        is_favourite=True, user_type=TwitterFollower.FOLLOWER,
-        account_owner=account
+        is_favourite=True, account_owner=account
     ).values_list('user_id', flat=True)
 
     favourites_list = [f for f in users_list if f.id_str in db_favourites]
