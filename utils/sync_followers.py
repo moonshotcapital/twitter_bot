@@ -85,8 +85,8 @@ def update_db_lists_non_automatic_changes(
         new_followers_info = [
             titles.format(
                 u.screen_name, 'twitter.com/{}'.format(u.screen_name),
-                u.location, u.followers_count, u.friends_count,
-                replace_characters(u.description, '\n*_`')
+                replace_characters(u.location, '\n*_`'), u.followers_count,
+                u.friends_count, replace_characters(u.description, '\n*_`')
             ) for u in new_followers
             ]
         stats = tw_user.followers_count, tw_user.friends_count
