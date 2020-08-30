@@ -57,52 +57,35 @@ def make_follow_for_current_account(account):
                         user_id=user.user_id, account_owner=account
                     ).delete()
                 except IntegrityError:
-                    continue
+                    logger.info('{} already in blacklist'.format(user.user_id))
                 continue
-            elif err.api_code == 89:
-                text = 'Twitter access token has been expired. Please,' \
-                       ' refresh it for {}'.format(account.screen_name)
-                logger.info(text)
-                send_message_to_slack(text)
-                send_message_to_telegram(text, account)
-                break
             else:
                 raise err
 
-        if tw_user and tw_user.followers_count > 400:
+        if tw_user and tw_user.followers_count > (
+                account.target_account_followers_count):
             time.sleep(random.randrange(10, 60))
-            try:
-                api.create_friendship(tw_user.id)
-                likes_count = random.randrange(1, 4)
-                likes = 0
-                tweets = tw_user.timeline()[:10]  # get 10 latest tweets
-                for t in tweets:
-                    if t.favorite_count >= 10 and not t.in_reply_to_status_id:
+            api.create_friendship(tw_user.id)
+            likes_count = random.randrange(1, 4)
+            likes = 0
+            tweets = tw_user.timeline()[:10]  # get 10 latest tweets
+            for t in tweets:
+                if t.favorite_count >= 10 and not t.in_reply_to_status_id:
+                    try:
                         api.create_favorite(t.id)
-                        likes += 1
-                    else:
-                        try:
-                            if t.retweeted_status.favorite_count >= 10:
-                                api.create_favorite(t.id)
-                                likes += 1
-                        except AttributeError:
-                            continue
-                    if likes == likes_count:
-                        break
-
-            except tweepy.error.TweepError as err:
-                if err.api_code == 161:
-                    text = "Unable to follow more people at this time. " \
-                           "Account {} must have a sufficient balance of" \
-                           " friends and subscribers".format(
-                                account.screen_name
-                            )
-                    logger.info(text)
-                    send_message_to_slack(text)
-                    send_message_to_telegram(text, account)
+                    except tweepy.error.TweepError as err:
+                        logger.info(err.args[0][0]['message'])
+                    likes += 1
+                else:
+                    try:
+                        if t.retweeted_status.favorite_count >= 10:
+                            api.create_favorite(t.id)
+                            likes += 1
+                    except AttributeError:
+                        continue
+                if likes == likes_count:
                     break
-                elif err.api_code == 139:
-                    logger.info('Like tweet which have already favorited!')
+
             logger.info("Follow %s", user)
             user.is_follower = True
             user.save(update_fields=('is_follower', ))
@@ -160,7 +143,7 @@ def retweet_verified_users_with_tag(user):
                 api.retweet(tweet.id)
             except tweepy.error.TweepError as err:
                 if err.api_code == 327 or err.api_code == 185:
-                    logger.info('Error code {}'.format(err.api_code))
+                    logger.info(err.args[0][0]['message'])
                     continue
             msg = 'New retweet for {}. Date: {}'.format(user, today)
             send_message_to_slack(msg)
@@ -209,7 +192,7 @@ def retweet_verified_users(user):
                 api.retweet(tweet.id)
             except tweepy.error.TweepError as err:
                 if err.api_code == 327 or err.api_code == 185:
-                    logger.info('Error code {}'.format(err.api_code))
+                    logger.info(err.args[0][0]['message'])
                     continue
             msg = 'New retweet! Date: {}\ntwitter.com/{}/status/{}'.format(
                 today.date(), tweet.user.screen_name, tweet.id)
@@ -246,18 +229,11 @@ def make_unfollow_for_current_account(account):
             friendship = api.show_friendship(user.id, user.screen_name,
                                              me.id, me.screen_name)[0]
         except tweepy.error.TweepError as err:
-            if err.api_code == 50:
-                logger.info("User {} not found!".format(friend))
-            elif err.api_code == 89:
-                text = 'Twitter access token has been expired.' \
-                       'Please, refresh it for {}'.format(me.screen_name)
-                logger.info(text)
-                send_message_to_slack(text)
-                send_message_to_telegram(text, account)
-                break
-            elif err.api_code == 63:
-                logger.info("User has been suspended. Error code: 63")
-            continue
+            if err.api_code == 50 or err.api_code == 63:
+                logger.info(err.args[0][0]['message'])
+                continue
+            else:
+                raise err
 
         if friendship and not friendship.followed_by:
             logger.info("Unfollow {}".format(friend))
@@ -289,9 +265,13 @@ def follow():
             make_follow_for_current_account(account)
             if account.follow_all_followers:
                 follow_all_own_followers(account)
-        except (tweepy.error.TweepError, HTTPError):
+        except HTTPError:
             logger.exception('Something gone wrong')
-            continue
+        except tweepy.error.TweepError as err:
+            message = err.args[0][0]['message']
+            logger.info(message)
+            send_message_to_slack(message)
+            send_message_to_telegram(message, account)
 
 
 def unfollow():
@@ -299,9 +279,13 @@ def unfollow():
     for account in accounts:
         try:
             make_unfollow_for_current_account(account)
-        except (tweepy.error.TweepError, HTTPError):
+        except HTTPError:
             logger.exception('Something gone wrong')
-            continue
+        except tweepy.error.TweepError as err:
+            message = err.args[0][0]['message']
+            logger.info(message)
+            send_message_to_slack(message)
+            send_message_to_telegram(message, account)
 
 
 def follow_all_own_followers(account):
@@ -309,7 +293,6 @@ def follow_all_own_followers(account):
         account.screen_name)
     )
     api = connect_to_twitter_api(account)
-    me = api.me()
     today = date.today()
 
     followers_list = api.followers_ids()
@@ -323,18 +306,10 @@ def follow_all_own_followers(account):
             api.create_friendship(follower)
         except tweepy.error.TweepError as err:
             if err.api_code == 50 or err.api_code == 63:
-                logger.info("User {} not found or suspended!".format(
-                    follower.name))
+                logger.info(err.args[0][0]['message'])
                 continue
-            elif err.api_code == 89:
-                text = 'Twitter access token has been expired.' \
-                       'Please, refresh it for {}'.format(
-                        me.screen_name
-                        )
-                logger.info(text)
-                send_message_to_slack(text)
-                send_message_to_telegram(text, account)
-                break
+            else:
+                raise err
         logger.info("Follow %s", follower)
         count += 1
     text = "Account: {}. Follow {} own followers." \
