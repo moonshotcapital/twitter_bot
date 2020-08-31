@@ -36,7 +36,6 @@ def make_follow_for_current_account(account):
     tw_accounts = TargetTwitterAccount.objects.filter(
         is_follower=False, account_owner=account,
         followers_count__gt=account.target_account_followers_count)
-    today = date.today()
 
     limit = random.randrange(account.followers_limit - 10,
                              account.followers_limit)
@@ -98,7 +97,7 @@ def make_follow_for_current_account(account):
     stats = get_count_of_followers_and_following(api)
     text = ("Finished following. Account: {}. Number of followers: {}."
             " We're following {}. Following before task: {}. Date: {}."
-            .format(account.screen_name, *stats, before_stat[1], today))
+            .format(account.screen_name, *stats, before_stat[1], date.today()))
     send_message_to_slack(text)
     send_message_to_telegram(text, account)
     logger.info('Finish follow for {}'.format(account.screen_name))
@@ -209,7 +208,6 @@ def make_unfollow_for_current_account(account):
     limit = random.randrange(account.followers_limit - 10,
                              account.followers_limit)
     logger.info("The limit of unfollowing is set to %s", limit)
-    today = date.today()
 
     followers_list = api.followers_ids()
     friends_list = api.friends_ids()
@@ -251,7 +249,7 @@ def make_unfollow_for_current_account(account):
     stats = get_count_of_followers_and_following(api)
     text = ("Finished unfollowing. Account: {}. Number of followers: {}."
             " We're following {}. Following before task: {}. Date: {}."
-            .format(account.screen_name, *stats, following, today))
+            .format(account.screen_name, *stats, following, date.today()))
     logger.info(text)
     send_message_to_slack(text)
     send_message_to_telegram(text, account)
@@ -271,7 +269,7 @@ def follow():
             message = err.args[0][0]['message']
             logger.info(message)
             send_message_to_slack(message)
-            send_message_to_telegram(message, account)
+            send_message_to_telegram(message, account, mode='HTML')
 
 
 def unfollow():
