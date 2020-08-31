@@ -70,19 +70,19 @@ def make_follow_for_current_account(account):
             likes = 0
             tweets = tw_user.timeline()[:10]  # get 10 latest tweets
             for t in tweets:
-                if t.favorite_count >= 10 and not t.in_reply_to_status_id:
-                    try:
+                try:
+                    if t.favorite_count >= 10 and not t.in_reply_to_status_id:
                         api.create_favorite(t.id)
-                    except tweepy.error.TweepError as err:
-                        logger.info(err.args[0][0]['message'])
-                    likes += 1
-                else:
-                    try:
+                        likes += 1
+                    else:
                         if t.retweeted_status.favorite_count >= 10:
                             api.create_favorite(t.id)
                             likes += 1
-                    except AttributeError:
-                        continue
+                except tweepy.error.TweepError as err:
+                    logger.info(err.args[0][0]['message'])
+                    continue
+                except AttributeError:
+                    continue
                 if likes == likes_count:
                     break
 
