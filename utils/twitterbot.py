@@ -64,7 +64,14 @@ def make_follow_for_current_account(account):
         if tw_user and tw_user.followers_count > (
                 account.target_account_followers_count):
             time.sleep(random.randrange(10, 60))
-            api.create_friendship(tw_user.id)
+            try:
+                api.create_friendship(tw_user.id)
+            except tweepy.error.TweepError as err:
+                if err.api_code == 160:
+                    logger.info(err.args[0][0]['message'])
+                    continue
+                else:
+                    raise err
             likes_count = random.randrange(1, 4)
             likes = 0
             tweets = tw_user.timeline()[:10]  # get 10 latest tweets
@@ -268,8 +275,11 @@ def follow():
         except tweepy.error.TweepError as err:
             message = err.args[0][0]['message']
             logger.info(message)
-            send_message_to_slack(message)
-            send_message_to_telegram(message, account, mode='HTML')
+            if err.api_code in [89, 161, 226, 326]:
+                send_message_to_slack(message)
+                send_message_to_telegram(message, account, mode='HTML')
+            else:
+                raise err
 
 
 def unfollow():
@@ -282,8 +292,11 @@ def unfollow():
         except tweepy.error.TweepError as err:
             message = err.args[0][0]['message']
             logger.info(message)
-            send_message_to_slack(message)
-            send_message_to_telegram(message, account)
+            if err.api_code in [89, 226, 326]:
+                send_message_to_slack(message)
+                send_message_to_telegram(message, account)
+            else:
+                raise err
 
 
 def follow_all_own_followers(account):
