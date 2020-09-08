@@ -25,6 +25,11 @@ class AccountOwner(models.Model):
     # path of the retweet function
     retweet_func = models.CharField(max_length=100, null=True, blank=True)
 
+    keywords = ArrayField(
+        models.CharField(max_length=100), null=True, blank=True,
+        help_text='words searched in description of target accounts'
+    )
+
     def __str__(self):
         return self.screen_name
 

@@ -41,6 +41,7 @@ def make_follow_for_current_account(account):
                              account.followers_limit)
     logger.info("The limit of followers is set to %s", limit)
     counter = 0
+    delete_target_accounts = []
     for user in tw_accounts:
         try:
             tw_user = api.get_user(user.user_id)
@@ -52,15 +53,19 @@ def make_follow_for_current_account(account):
                     BlackList.objects.create(user_id=user.user_id,
                                              reason="Not found/Suspended",
                                              account_owner=account)
-                    TargetTwitterAccount.objects.filter(
-                        user_id=user.user_id, account_owner=account
-                    ).delete()
+                    delete_target_accounts.append(user.user_id)
                 except IntegrityError:
                     logger.info('{} already in blacklist'.format(user.user_id))
                 continue
             else:
                 raise err
 
+        if account.keywords:
+            keyword_descr = any(keyword in tw_user.description.lower()
+                                for keyword in account.keywords)
+            if not keyword_descr:
+                delete_target_accounts.append(user.user_id)
+                continue
         if tw_user and tw_user.followers_count > (
                 account.target_account_followers_count):
             time.sleep(random.randrange(10, 60))
@@ -96,11 +101,17 @@ def make_follow_for_current_account(account):
             user.is_follower = True
             user.save(update_fields=('is_follower', ))
             counter += 1
+        else:
+            delete_target_accounts.append(user.user_id)
+            continue
 
         if counter == limit:
             logger.info("The limit of %s followings is reached", limit)
             break
 
+    TargetTwitterAccount.objects.filter(
+        user_id__in=delete_target_accounts, account_owner=account
+    ).delete()
     stats = get_count_of_followers_and_following(api)
     text = ("Finished following. Account: {}. Number of followers: {}."
             " We're following {}. Following before task: {}. Date: {}."
