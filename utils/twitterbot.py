@@ -1,4 +1,5 @@
 import logging
+import re
 import tweepy
 import random
 import time
@@ -61,8 +62,11 @@ def make_follow_for_current_account(account):
                 raise err
 
         if account.keywords:
-            keyword_descr = any(keyword in tw_user.description.lower()
-                                for keyword in account.keywords)
+            keyword_descr = any(
+                re.search('(^|\W){}($|\W)'.format(keyword),
+                          tw_user.description.lower(), re.IGNORECASE)
+                for keyword in account.keywords
+            )
             if not keyword_descr:
                 delete_target_accounts.append(user.user_id)
                 continue
