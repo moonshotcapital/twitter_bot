@@ -78,6 +78,8 @@ def make_follow_for_current_account(account):
             except tweepy.error.TweepError as err:
                 if err.api_code == 160:
                     logger.info(err.args[0][0]['message'])
+                    user.is_follower = True
+                    user.save(update_fields=('is_follower',))
                     continue
                 else:
                     raise err
