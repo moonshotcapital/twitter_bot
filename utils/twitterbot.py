@@ -24,6 +24,9 @@ from utils.common import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+T_MIN = 60
+T_MAX = 120
+
 
 def get_count_of_followers_and_following(api):
     data = api.me()
@@ -72,7 +75,7 @@ def make_follow_for_current_account(account):
                 continue
         if tw_user and tw_user.followers_count > (
                 account.target_account_followers_count):
-            time.sleep(random.randrange(10, 60))
+            time.sleep(random.randrange(T_MIN, T_MAX))
             try:
                 api.create_friendship(tw_user.id)
             except tweepy.error.TweepError as err:
@@ -184,7 +187,7 @@ def retweet_verified_users(user):
     )
     tweets_to_retweet = []
     for ver_user in ver_users:
-        time.sleep(random.randrange(10, 60))
+        time.sleep(random.randrange(T_MIN, T_MAX))
         recent_tweets = api.user_timeline(ver_user.screen_name,
                                           exclude_replies=True,
                                           count=100)
@@ -246,7 +249,7 @@ def make_unfollow_for_current_account(account):
     for friend in reversed(not_in_followers):
         try:
             api.destroy_friendship(friend)
-            time.sleep(random.randrange(10, 60))
+            time.sleep(random.randrange(T_MIN, T_MAX))
             user = api.get_user(friend)
             friendship = api.show_friendship(user.id, user.screen_name,
                                              me.id, me.screen_name)[0]
@@ -329,7 +332,7 @@ def follow_all_own_followers(account):
 
     count = 0
     for follower in not_in_friends:
-        time.sleep(random.randrange(10, 60))
+        time.sleep(random.randrange(T_MIN, T_MAX))
         try:
             api.create_friendship(follower)
         except tweepy.error.TweepError as err:
