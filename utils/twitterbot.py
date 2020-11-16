@@ -66,13 +66,10 @@ def _follow_target_accounts(account, api):
             if err.api_code == 50 or err.api_code == 63:
                 logger.info("User {} not found or suspended!".format(
                     user.name))
-                try:
-                    BlackList.objects.create(user_id=user.user_id,
-                                             reason="Not found/Suspended",
-                                             account_owner=account)
-                    delete_target_accounts.append(user.user_id)
-                except IntegrityError:
-                    logger.info('{} already in blacklist'.format(user.user_id))
+                delete_target_accounts.append(user.user_id)
+                BlackList.objects.get_or_create(user_id=user.user_id,
+                                                reason="Not found/Suspended",
+                                                account_owner=account)
                 continue
             else:
                 raise err
