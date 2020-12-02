@@ -1,9 +1,9 @@
 import tweepy
-import time
 
 from celery import task
 from celery.utils.log import get_task_logger
-from datetime import timedelta
+from datetime import timedelta, datetime
+from django.conf import settings
 from django.utils import timezone
 from twitterbot.models import AccountOwner, RunTasksTimetable, TwitterFollower
 import random
@@ -24,24 +24,36 @@ def update_followers_list_task():
 
 @task
 def create_timetable():
+    """
+    Create everyday timetable for main actions: follow, unfollow, retweet
+    """
     logger.info('Started creating tasks timetable')
-    time.sleep(random.randrange(10, 30))
     start = timezone.now()
-    # Scheduler task executes at 7 a.m. everyday
-    # And all the modules will execute after this task in time 'time_execute'
-    # Create time list from 7 a.m. to 22 p.m.
-    hours_range = list(range(0, 15))
-    random.shuffle(hours_range)
-    tasks = {'follow': random.randrange(4, 6),
-             'unfollow': random.randrange(3, 5),
-             'retweet': 3}
-    for task_name in tasks:
-        for x in range(tasks[task_name]):
-            hours_execute = hours_range.pop()
-            time_execute = start + timedelta(hours=hours_execute,
-                                             minutes=random.randrange(60))
-            RunTasksTimetable.objects.create(name=task_name,
-                                             execution_time=time_execute)
+    tasks = {
+        'follow': random.randrange(
+            settings.FOLLOW_TASK_MAX_TIME_PER_DAY - 2,
+            settings.FOLLOW_TASK_MAX_TIME_PER_DAY
+        ),
+        'unfollow': random.randrange(
+            settings.FOLLOW_TASK_MAX_TIME_PER_DAY - 3,
+            settings.FOLLOW_TASK_MAX_TIME_PER_DAY - 1
+        ),
+        'retweet': settings.RETWEET_TASK_MAX_TIME_PER_DAY
+    }
+    actions, task_list = [], []
+    [actions.extend([action_name]*tasks[action_name]) for action_name in tasks]
+    random.shuffle(actions)
+    activity_hours = datetime.max.hour - start.hour
+    max_gap_in_minutes = int(activity_hours / len(actions) * 60)
+    for action_name in actions:
+        start = start + timedelta(
+            minutes=random.randrange(60, max_gap_in_minutes),
+            seconds=random.randrange(1, 60)
+        )
+        task_list.append(
+            RunTasksTimetable(name=action_name, execution_time=start)
+        )
+    RunTasksTimetable.objects.bulk_create(task_list)
     logger.info('New timetable created for {}'.format(start.date()))
 
 
