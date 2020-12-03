@@ -31,14 +31,14 @@ def create_timetable():
     start = timezone.now()
     tasks = {
         'follow': random.randrange(
-            settings.FOLLOW_TASK_MAX_TIME_PER_DAY - 2,
-            settings.FOLLOW_TASK_MAX_TIME_PER_DAY
+            int(settings.FOLLOW_TASK_MAX_TIME_PER_DAY) - 2,
+            int(settings.FOLLOW_TASK_MAX_TIME_PER_DAY)
         ),
         'unfollow': random.randrange(
-            settings.FOLLOW_TASK_MAX_TIME_PER_DAY - 3,
-            settings.FOLLOW_TASK_MAX_TIME_PER_DAY - 1
+            int(settings.FOLLOW_TASK_MAX_TIME_PER_DAY) - 3,
+            int(settings.FOLLOW_TASK_MAX_TIME_PER_DAY) - 1
         ),
-        'retweet': settings.RETWEET_TASK_MAX_TIME_PER_DAY
+        'retweet': int(settings.RETWEET_TASK_MAX_TIME_PER_DAY)
     }
     actions, task_list = [], []
     [actions.extend([action_name]*tasks[action_name]) for action_name in tasks]
