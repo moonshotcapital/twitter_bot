@@ -326,6 +326,7 @@ def follow():
                 send_message_to_slack(message)
                 send_message_to_telegram(message, account, mode='HTML')
             else:
+                logger.info(err)
                 raise err
 
 
@@ -343,6 +344,7 @@ def unfollow():
                 send_message_to_slack(message)
                 send_message_to_telegram(message, account)
             else:
+                logger.info(err)
                 raise err
 
 
