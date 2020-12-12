@@ -85,7 +85,7 @@ def _follow_target_accounts(account, api):
             try:
                 api.create_friendship(tw_user.id)
             except tweepy.error.TweepError as err:
-                if err.api_code == 160:
+                if err.api_code in [158, 160]:
                     logger.info(err.args[0][0]['message'])
                     user.is_follower = True
                     user.save(update_fields=('is_follower',))
@@ -326,8 +326,11 @@ def follow():
                 send_message_to_slack(message)
                 send_message_to_telegram(message, account, mode='HTML')
             else:
-                logger.info(err)
+                logger.exception(err)
                 raise err
+        except Exception as err:
+            logger.exception(err)
+            raise err
 
 
 def unfollow():
@@ -344,8 +347,11 @@ def unfollow():
                 send_message_to_slack(message)
                 send_message_to_telegram(message, account)
             else:
-                logger.info(err)
+                logger.exception(err)
                 raise err
+        except Exception as err:
+            logger.exception(err)
+            raise err
 
 
 def follow_all_own_followers(account):
