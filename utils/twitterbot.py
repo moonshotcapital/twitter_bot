@@ -92,7 +92,11 @@ def _follow_target_accounts(account, api):
                     continue
                 else:
                     raise err
-            _like_user_tweets(api, tw_user)
+            try:
+                _like_user_tweets(api, tw_user)
+            except tweepy.error.TweepError as err:
+                logger.info(err)
+                continue
 
             logger.info("Follow %s", user)
             user.is_follower = True
